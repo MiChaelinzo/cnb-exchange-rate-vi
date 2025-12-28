@@ -199,9 +199,10 @@ async function fetchRatesInBatches(
 
 export async function fetchHistoricalRates(
   currencyCode: string,
-  days: number = 30
+  days: number = 30,
+  startDate?: Date
 ): Promise<{ date: string; rate: number }[]> {
-  const dates = getWorkingDates(new Date(), days)
+  const dates = getWorkingDates(startDate || new Date(), days)
   
   console.log(`Fetching ${days} days of historical data for ${currencyCode}...`)
   
