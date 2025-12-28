@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { TrendUp, TrendDown, ArrowsClockwise, Warning, ChartLine, ChartBar, ChartLineUp } from '@phosphor-icons/react'
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { Badge } from '@/components/ui/badge'
+import { TrendUp, TrendDown, ArrowsClockwise, Warning, ChartLine, ChartBar, ChartLineUp, Percent } from '@phosphor-icons/react'
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ComposedChart, Cell } from 'recharts'
 import { formatDate } from '@/lib/utils'
 
-type ChartType = 'line' | 'bar' | 'area'
+type ChartType = 'line' | 'bar' | 'area' | 'change'
 
 interface CurrencyTrendChartProps {
   rates: ExchangeRate[]
@@ -25,11 +26,26 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
   const { data: historicalData, isLoading, error, refetch } = useHistoricalRates(selectedCurrency, timeRange)
 
   const chartData = useMemo(() => {
-    return historicalData.map(point => ({
-      date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      fullDate: point.date,
-      rate: Number(point.rate.toFixed(3)),
-    }))
+    const dataWithChanges = historicalData.map((point, index, array) => {
+      let percentChange = 0
+      let absoluteChange = 0
+      
+      if (index > 0) {
+        const previousRate = array[index - 1].rate
+        absoluteChange = point.rate - previousRate
+        percentChange = (absoluteChange / previousRate) * 100
+      }
+      
+      return {
+        date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        fullDate: point.date,
+        rate: Number(point.rate.toFixed(3)),
+        percentChange: Number(percentChange.toFixed(3)),
+        absoluteChange: Number(absoluteChange.toFixed(4)),
+      }
+    })
+    
+    return dataWithChanges
   }, [historicalData])
 
   const trendAnalysis = useMemo(() => {
@@ -40,10 +56,40 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
     const change = lastRate - firstRate
     const percentChange = (change / firstRate) * 100
 
+    const allPercentChanges = chartData
+      .slice(1)
+      .map(d => d.percentChange)
+      .filter(pc => pc !== 0)
+    
+    const positiveChanges = allPercentChanges.filter(pc => pc > 0)
+    const negativeChanges = allPercentChanges.filter(pc => pc < 0)
+    
+    const maxIncrease = allPercentChanges.length > 0 
+      ? Math.max(...allPercentChanges) 
+      : 0
+    const maxDecrease = allPercentChanges.length > 0 
+      ? Math.min(...allPercentChanges) 
+      : 0
+    
+    const averageChange = allPercentChanges.length > 0
+      ? allPercentChanges.reduce((sum, pc) => sum + pc, 0) / allPercentChanges.length
+      : 0
+    
+    const volatility = allPercentChanges.length > 0
+      ? Math.sqrt(allPercentChanges.reduce((sum, pc) => sum + Math.pow(pc - averageChange, 2), 0) / allPercentChanges.length)
+      : 0
+
     return {
       change,
       percentChange,
       isPositive: change > 0,
+      maxIncrease,
+      maxDecrease,
+      averageChange,
+      volatility,
+      positiveDays: positiveChanges.length,
+      negativeDays: negativeChanges.length,
+      stableDays: chartData.length - 1 - positiveChanges.length - negativeChanges.length,
     }
   }, [chartData])
 
@@ -129,6 +175,12 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                       <span>Area Chart</span>
                     </div>
                   </SelectItem>
+                  <SelectItem value="change">
+                    <div className="flex items-center gap-2">
+                      <Percent size={16} weight="bold" />
+                      <span>Rate Changes</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -151,36 +203,101 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
           </div>
 
           {trendAnalysis && !isLoading && !error && (
-            <div className={`p-4 rounded-lg border ${
-              trendAnalysis.isPositive 
-                ? 'bg-accent/10 border-accent/30' 
-                : 'bg-destructive/10 border-destructive/30'
-            }`}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  {trendAnalysis.isPositive ? (
-                    <TrendUp size={24} weight="bold" className="text-accent" />
-                  ) : (
-                    <TrendDown size={24} weight="bold" className="text-destructive" />
-                  )}
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {timeRange}-day trend for {selectedCurrency}
-                    </p>
-                    <p className="font-semibold text-base">
-                      {trendAnalysis.isPositive ? '+' : ''}{trendAnalysis.percentChange.toFixed(2)}% 
-                      ({trendAnalysis.isPositive ? '+' : ''}{trendAnalysis.change.toFixed(3)} CZK)
+            <>
+              <div className={`p-4 rounded-lg border ${
+                trendAnalysis.isPositive 
+                  ? 'bg-accent/10 border-accent/30' 
+                  : 'bg-destructive/10 border-destructive/30'
+              }`}>
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-3">
+                    {trendAnalysis.isPositive ? (
+                      <TrendUp size={28} weight="bold" className="text-accent" />
+                    ) : (
+                      <TrendDown size={28} weight="bold" className="text-destructive" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {timeRange}-day trend for {selectedCurrency}
+                      </p>
+                      <p className="font-semibold text-xl">
+                        {trendAnalysis.isPositive ? '+' : ''}{trendAnalysis.percentChange.toFixed(2)}% 
+                        <span className="text-base ml-2 text-muted-foreground">
+                          ({trendAnalysis.isPositive ? '+' : ''}{trendAnalysis.change.toFixed(3)} CZK)
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Current Rate</p>
+                    <p className="font-mono font-semibold text-xl">
+                      {chartData.length > 0 ? chartData[chartData.length - 1].rate.toFixed(3) : '—'} CZK
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Current Rate</p>
-                  <p className="font-mono font-semibold text-lg">
-                    {chartData.length > 0 ? chartData[chartData.length - 1].rate.toFixed(3) : '—'} CZK
-                  </p>
-                </div>
               </div>
-            </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Card className="p-3 bg-accent/5 border-accent/20">
+                  <div className="text-xs text-muted-foreground mb-1">Max Increase</div>
+                  <div className="flex items-baseline gap-1">
+                    <TrendUp size={16} weight="bold" className="text-accent" />
+                    <span className="font-semibold text-accent text-lg">
+                      +{trendAnalysis.maxIncrease.toFixed(2)}%
+                    </span>
+                  </div>
+                </Card>
+
+                <Card className="p-3 bg-destructive/5 border-destructive/20">
+                  <div className="text-xs text-muted-foreground mb-1">Max Decrease</div>
+                  <div className="flex items-baseline gap-1">
+                    <TrendDown size={16} weight="bold" className="text-destructive" />
+                    <span className="font-semibold text-destructive text-lg">
+                      {trendAnalysis.maxDecrease.toFixed(2)}%
+                    </span>
+                  </div>
+                </Card>
+
+                <Card className="p-3 bg-muted/50 border-border">
+                  <div className="text-xs text-muted-foreground mb-1">Avg Daily Change</div>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`font-semibold text-lg ${
+                      trendAnalysis.averageChange > 0 
+                        ? 'text-accent' 
+                        : trendAnalysis.averageChange < 0 
+                        ? 'text-destructive' 
+                        : 'text-foreground'
+                    }`}>
+                      {trendAnalysis.averageChange > 0 ? '+' : ''}{trendAnalysis.averageChange.toFixed(3)}%
+                    </span>
+                  </div>
+                </Card>
+
+                <Card className="p-3 bg-muted/50 border-border">
+                  <div className="text-xs text-muted-foreground mb-1">Volatility</div>
+                  <div className="font-semibold text-lg">
+                    {trendAnalysis.volatility.toFixed(3)}%
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-sm text-muted-foreground">Movement:</span>
+                <Badge variant="default" className="gap-1 bg-accent/20 text-accent border-accent/30">
+                  <TrendUp size={14} weight="bold" />
+                  {trendAnalysis.positiveDays} days
+                </Badge>
+                <Badge variant="default" className="gap-1 bg-destructive/20 text-destructive border-destructive/30">
+                  <TrendDown size={14} weight="bold" />
+                  {trendAnalysis.negativeDays} days
+                </Badge>
+                {trendAnalysis.stableDays > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    {trendAnalysis.stableDays} stable
+                  </Badge>
+                )}
+              </div>
+            </>
           )}
         </div>
       </CardHeader>
@@ -231,10 +348,27 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                         backgroundColor: 'hsl(var(--popover))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '0.5rem',
+                        padding: '12px',
                       }}
-                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                      itemStyle={{ color: 'hsl(var(--primary))' }}
-                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))', fontWeight: 600, marginBottom: '8px' }}
+                      formatter={(value: number, name: string, props: any) => {
+                        const percentChange = props.payload.percentChange
+                        const changeColor = percentChange > 0 ? 'hsl(var(--accent))' : percentChange < 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))'
+                        
+                        return [
+                          <div key="rate" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ color: 'hsl(var(--primary))' }}>
+                              <strong>{value.toFixed(3)} CZK</strong>
+                            </div>
+                            {percentChange !== 0 && (
+                              <div style={{ color: changeColor, fontSize: '0.875rem' }}>
+                                {percentChange > 0 ? '↑' : '↓'} {percentChange > 0 ? '+' : ''}{percentChange.toFixed(2)}% from previous day
+                              </div>
+                            )}
+                          </div>,
+                          'Rate'
+                        ]
+                      }}
                       labelFormatter={(label, payload) => {
                         if (payload && payload[0]) {
                           return formatDate(payload[0].payload.fullDate)
@@ -280,10 +414,27 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                         backgroundColor: 'hsl(var(--popover))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '0.5rem',
+                        padding: '12px',
                       }}
-                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                      itemStyle={{ color: 'hsl(var(--primary))' }}
-                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))', fontWeight: 600, marginBottom: '8px' }}
+                      formatter={(value: number, name: string, props: any) => {
+                        const percentChange = props.payload.percentChange
+                        const changeColor = percentChange > 0 ? 'hsl(var(--accent))' : percentChange < 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))'
+                        
+                        return [
+                          <div key="rate" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ color: 'hsl(var(--primary))' }}>
+                              <strong>{value.toFixed(3)} CZK</strong>
+                            </div>
+                            {percentChange !== 0 && (
+                              <div style={{ color: changeColor, fontSize: '0.875rem' }}>
+                                {percentChange > 0 ? '↑' : '↓'} {percentChange > 0 ? '+' : ''}{percentChange.toFixed(2)}% from previous day
+                              </div>
+                            )}
+                          </div>,
+                          'Rate'
+                        ]
+                      }}
                       labelFormatter={(label, payload) => {
                         if (payload && payload[0]) {
                           return formatDate(payload[0].payload.fullDate)
@@ -332,10 +483,27 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                         backgroundColor: 'hsl(var(--popover))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '0.5rem',
+                        padding: '12px',
                       }}
-                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                      itemStyle={{ color: 'hsl(var(--primary))' }}
-                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))', fontWeight: 600, marginBottom: '8px' }}
+                      formatter={(value: number, name: string, props: any) => {
+                        const percentChange = props.payload.percentChange
+                        const changeColor = percentChange > 0 ? 'hsl(var(--accent))' : percentChange < 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))'
+                        
+                        return [
+                          <div key="rate" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ color: 'hsl(var(--primary))' }}>
+                              <strong>{value.toFixed(3)} CZK</strong>
+                            </div>
+                            {percentChange !== 0 && (
+                              <div style={{ color: changeColor, fontSize: '0.875rem' }}>
+                                {percentChange > 0 ? '↑' : '↓'} {percentChange > 0 ? '+' : ''}{percentChange.toFixed(2)}% from previous day
+                              </div>
+                            )}
+                          </div>,
+                          'Rate'
+                        ]
+                      }}
                       labelFormatter={(label, payload) => {
                         if (payload && payload[0]) {
                           return formatDate(payload[0].payload.fullDate)
@@ -357,11 +525,77 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                     />
                   </AreaChart>
                 )}
+
+                {chartType === 'change' && (
+                  <ComposedChart 
+                    data={chartData.slice(1)}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      tickFormatter={(value) => `${value.toFixed(2)}%`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.5rem',
+                        padding: '12px',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))', fontWeight: 600, marginBottom: '8px' }}
+                      formatter={(value: number, name: string) => {
+                        const changeColor = value > 0 ? 'hsl(var(--accent))' : value < 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))'
+                        
+                        return [
+                          <div key="change" style={{ color: changeColor }}>
+                            <strong>{value > 0 ? '+' : ''}{value.toFixed(3)}%</strong>
+                          </div>,
+                          'Daily Change'
+                        ]
+                      }}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          return formatDate(payload[0].payload.fullDate)
+                        }
+                        return label
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="rect"
+                    />
+                    <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
+                    <Bar 
+                      dataKey="percentChange" 
+                      name="Daily % Change"
+                      radius={[4, 4, 4, 4]}
+                    >
+                      {chartData.slice(1).map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.percentChange > 0 ? 'hsl(var(--accent))' : 'hsl(var(--destructive))'}
+                        />
+                      ))}
+                    </Bar>
+                  </ComposedChart>
+                )}
               </>
             </ResponsiveContainer>
             
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              <p>Showing {chartData.length} data points (excludes weekends)</p>
+              <p>
+                {chartType === 'change' 
+                  ? `Showing ${chartData.length - 1} daily changes (excludes weekends)` 
+                  : `Showing ${chartData.length} data points (excludes weekends)`
+                }
+              </p>
             </div>
           </div>
         )}
