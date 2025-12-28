@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Users, Globe, Bell, UserPlus, Phone, VideoCamera } from '@phosphor-icons/react'
+import { Users, Globe, Bell, UserPlus, Phone, VideoCamera, MagnifyingGlass } from '@phosphor-icons/react'
 import { CreateWatchlistDialog } from './CreateWatchlistDialog'
 import { SharedWatchlistManager } from './SharedWatchlistManager'
 import { WatchlistInvites } from './WatchlistInvites'
@@ -10,9 +10,12 @@ import { WatchlistActivityPanel } from './WatchlistActivityPanel'
 import { CursorTrackingInfo } from './CursorTrackingInfo'
 import { VoiceVideoCall } from './VoiceVideoCall'
 import { GroupVideoCall } from './GroupVideoCall'
+import { TranscriptionSearch } from './TranscriptionSearch'
+import { CallTranscriptionViewer } from './CallTranscriptionViewer'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useSharedWatchlists, type SharedWatchlist } from '@/hooks/use-shared-watchlists'
 import { useCursorTracking } from '@/hooks/use-cursor-tracking'
+import { useCallTranscription, type TranscriptionData } from '@/hooks/use-call-transcription'
 import { LiveCursorsOverlay } from './LiveCursor'
 import { ActiveCursorsIndicator } from './ActiveCursorsIndicator'
 
@@ -25,7 +28,9 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
   const [selectedWatchlist, setSelectedWatchlist] = useState<SharedWatchlist | null>(null)
   const [currentUserId, setCurrentUserId] = useState('')
   const [currentUser, setCurrentUser] = useState<{ login: string; avatarUrl: string } | null>(null)
+  const [selectedTranscription, setSelectedTranscription] = useState<TranscriptionData | null>(null)
   const { watchlists } = useSharedWatchlists()
+  const { transcriptions, deleteTranscription } = useCallTranscription()
   const { cursors } = useCursorTracking(
     selectedWatchlist?.id || null,
     selectedWatchlist !== null
@@ -57,6 +62,11 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
   const handleWatchlistSelect = (currencies: string[], watchlist: SharedWatchlist | null) => {
     onWatchlistSelect(currencies, watchlist)
     setSelectedWatchlist(watchlist)
+  }
+
+  const handleTranscriptionSelect = (transcription: TranscriptionData) => {
+    setSelectedTranscription(transcription)
+    setActiveTab('search')
   }
 
   return (
@@ -96,7 +106,7 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className={selectedWatchlist ? 'lg:col-span-2' : 'lg:col-span-3'}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full max-w-4xl grid-cols-4">
+            <TabsList className="grid w-full max-w-5xl grid-cols-5">
               <TabsTrigger value="my-watchlists" className="gap-2">
                 <Users size={20} weight="duotone" />
                 My Watchlists
@@ -112,6 +122,10 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
               <TabsTrigger value="group-calls" className="gap-2">
                 <VideoCamera size={20} weight="duotone" />
                 Group Calls
+              </TabsTrigger>
+              <TabsTrigger value="search" className="gap-2">
+                <MagnifyingGlass size={20} weight="duotone" />
+                Search
               </TabsTrigger>
             </TabsList>
 
@@ -166,6 +180,23 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
                     Select a shared watchlist from the "My Watchlists" tab to enable group video calls with team members.
                   </AlertDescription>
                 </Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="search" className="mt-6">
+              {selectedTranscription ? (
+                <CallTranscriptionViewer
+                  transcriptions={[selectedTranscription]}
+                  onDelete={(id) => {
+                    deleteTranscription(id)
+                    setSelectedTranscription(null)
+                  }}
+                />
+              ) : (
+                <TranscriptionSearch
+                  transcriptions={transcriptions}
+                  onSelectTranscription={handleTranscriptionSelect}
+                />
               )}
             </TabsContent>
           </Tabs>
