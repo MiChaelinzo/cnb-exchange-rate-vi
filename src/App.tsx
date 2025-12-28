@@ -12,16 +12,19 @@ import { ExportMenu } from '@/components/ExportMenu'
 import { QuickStats } from '@/components/QuickStats'
 import { MultiCurrencyConverter } from '@/components/MultiCurrencyConverter'
 import { RateAlerts } from '@/components/RateAlerts'
+import { AiInsights } from '@/components/AiInsights'
+import { AiChatAssistant } from '@/components/AiChatAssistant'
+import { AiReportGenerator } from '@/components/AiReportGenerator'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell } from '@phosphor-icons/react'
+import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle } from '@phosphor-icons/react'
 import { formatDate } from '@/lib/utils'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 
-type ViewMode = 'current' | 'comparison' | 'analytics'
+type ViewMode = 'current' | 'comparison' | 'analytics' | 'ai'
 
 function App() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
@@ -32,7 +35,7 @@ function App() {
   const { favorites, clearFavorites } = useFavorites()
 
   const handleRefresh = async () => {
-    if (viewMode === 'current' || viewMode === 'analytics') {
+    if (viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') {
       toast.promise(refetch(), {
         loading: 'Fetching exchange rates...',
         success: 'Exchange rates updated successfully',
@@ -77,19 +80,19 @@ function App() {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {(viewMode === 'current' || viewMode === 'analytics') && !isLoading && !error && data && (
+              {(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && !isLoading && !error && data && (
                 <ExportMenu data={data} variant="outline" size="lg" />
               )}
               <Button
                 onClick={handleRefresh}
-                disabled={(viewMode === 'current' || viewMode === 'analytics') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
+                disabled={(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
                 size="lg"
                 className="gap-2"
               >
                 <ArrowsClockwise 
                   size={18} 
                   weight="bold"
-                  className={((viewMode === 'current' || viewMode === 'analytics') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
+                  className={((viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
                 />
                 Refresh
               </Button>
@@ -97,7 +100,7 @@ function App() {
           </div>
 
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
-            <TabsList className="grid w-full max-w-2xl grid-cols-3 h-12">
+            <TabsList className="grid w-full max-w-3xl grid-cols-4 h-12">
               <TabsTrigger value="current" className="gap-2 text-base">
                 <ChartLine size={20} weight="duotone" />
                 Current Rates
@@ -109,6 +112,10 @@ function App() {
               <TabsTrigger value="analytics" className="gap-2 text-base">
                 <ChartPieSlice size={20} weight="duotone" />
                 Analytics
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="gap-2 text-base">
+                <Sparkle size={20} weight="duotone" />
+                AI Insights
               </TabsTrigger>
             </TabsList>
 
@@ -232,6 +239,43 @@ function App() {
                   </div>
 
                   <CurrencyTrendChart rates={data.rates} />
+                </>
+              )}
+
+              {isLoading && (
+                <div className="space-y-6">
+                  <ExchangeRateTableSkeleton />
+                </div>
+              )}
+
+              {error && (
+                <Alert variant="destructive">
+                  <Warning size={20} weight="fill" />
+                  <AlertTitle>Error Loading Data</AlertTitle>
+                  <AlertDescription className="mt-2">
+                    {error}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRefresh}
+                      className="mt-3"
+                    >
+                      Try Again
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="ai" className="space-y-8 mt-8">
+              {!isLoading && !error && data && (
+                <>
+                  <AiInsights rates={data.rates} date={data.date} />
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AiChatAssistant rates={data.rates} date={data.date} />
+                    <AiReportGenerator rates={data.rates} date={data.date} />
+                  </div>
                 </>
               )}
 

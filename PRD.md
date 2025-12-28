@@ -8,7 +8,7 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 3. **Interactive** - Practical currency conversion tools that make exchange rate data immediately useful
 
 **Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
-- This application has evolved into a sophisticated financial data platform with multiple specialized views (Current Rates, Comparison Mode, Analytics), real-time data processing, persistent user preferences (favorites, alerts), advanced filtering and search, interactive visualizations, multi-format exports, and intelligent alert systems. It demonstrates complex state management, batch API processing, and provides professional-grade analysis tools.
+- This application has evolved into a sophisticated financial data platform with multiple specialized views (Current Rates, Comparison Mode, Analytics, AI Insights), real-time data processing, persistent user preferences (favorites, alerts), advanced filtering and search, interactive visualizations, multi-format exports, intelligent alert systems, and cutting-edge AI-powered analysis features. It demonstrates complex state management, batch API processing, natural language processing integration, and provides professional-grade analysis tools with artificial intelligence capabilities.
 
 ## Essential Features
 
@@ -103,6 +103,27 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Progression**: User navigates to Analytics tab → Fills alert form (currency, condition, rate) → Clicks Create Alert → Alert saved to persistent storage → On data refresh, alerts checked → If triggered, toast notification appears → Alert marked as triggered with green badge → User can delete alerts anytime
 - **Success criteria**: Alerts persist across sessions using useKV; triggered alerts show toast notifications; visual distinction between active and triggered alerts; current rate displayed for comparison; form validation prevents invalid inputs; clean UI for managing multiple alerts; info message explains checking mechanism
 
+### AI Market Insights
+- **Functionality**: Generates intelligent, AI-powered analysis of current exchange rates using advanced language models to identify trends, opportunities, and risks
+- **Purpose**: Provides professional-grade financial insights that would typically require expert analysts, making sophisticated market analysis accessible to all users
+- **Trigger**: User clicks "Generate Insights" button in the AI Insights tab
+- **Progression**: User navigates to AI Insights tab → Clicks Generate Insights → AI analyzes top 10 currencies → Generates 5 categorized insights (trend/opportunity/risk/info) → Insights display with color-coded cards → Each insight shows currency code, insight type, and detailed message
+- **Success criteria**: Insights generated within 5-10 seconds using GPT-4o-mini; JSON response parsed correctly; 5 unique insights per generation; color-coded by type (green for opportunities, blue for trends, red for risks, gray for info); clear currency identification; professional, actionable insights; graceful error handling
+
+### AI Currency Chat Assistant
+- **Functionality**: Interactive conversational AI that answers questions about exchange rates, provides recommendations, and offers personalized currency advice in natural language
+- **Purpose**: Makes currency data accessible through natural conversation, allowing users to ask questions in plain English rather than navigating complex interfaces
+- **Trigger**: User types question in chat input and sends message
+- **Progression**: User navigates to AI Insights tab → Types question in chat input → Presses Enter or clicks send → AI processes question with context of all current rates → Response appears in chat bubble → Conversation history maintained → User can ask follow-up questions → Suggested questions available when chat is empty
+- **Success criteria**: Responses within 3-5 seconds; maintains conversation context (last 4 messages); includes all currency data in AI context; helpful suggested questions for new users; clear visual distinction between user and assistant messages; timestamps on messages; auto-scroll to latest message; handles errors gracefully; professional and friendly tone
+
+### AI Market Report Generator
+- **Functionality**: Creates comprehensive, professional market analysis reports in markdown/text format that can be downloaded and shared
+- **Purpose**: Provides exportable, professional documentation of market conditions for presentations, records, or decision-making processes
+- **Trigger**: User clicks "Generate Report" button
+- **Progression**: User navigates to AI Insights tab → Clicks Generate Report → AI analyzes all rates, identifies strongest/weakest currencies → Generates structured report with executive summary, key findings, currency analysis, outlook, and recommendations → Report displays in scrollable viewer → User can download as Markdown (.md) or Text (.txt) → Files named with date for organization
+- **Success criteria**: Professional report structure with clear sections; uses GPT-4o model for high-quality writing; includes specific data points and numbers; identifies top 3 strongest and weakest currencies; provides actionable recommendations; download works correctly in both formats; report formatted for readability; generation completes within 10-15 seconds; filenames include date
+
 ## Edge Case Handling
 
 - **API Timeout/Network Failure**: Display friendly error message with retry button, automatic proxy fallback, and troubleshooting hints
@@ -145,6 +166,18 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Rate Alerts Persistence**: Store alerts in KV storage to survive page refreshes
 - **Analytics Tab Loading**: Show appropriate loading states when switching to analytics tab
 - **Three-Tab Navigation**: Ensure smooth transitions between Current Rates, Comparison, and Analytics tabs
+- **AI Insights Generation Failure**: Display friendly error with retry option if AI service fails
+- **AI Insights Invalid JSON**: Handle malformed AI responses gracefully without breaking UI
+- **AI Chat Context Overflow**: Limit conversation history to last 4 messages to prevent token limits
+- **AI Chat Network Failure**: Show error message in chat bubble if AI request fails
+- **AI Chat Empty Input**: Disable send button when input is empty or whitespace
+- **AI Chat Rapid Submissions**: Prevent multiple simultaneous requests with loading state
+- **AI Report Generation Timeout**: Handle long-running report generations with appropriate feedback
+- **AI Report Download Failure**: Catch and display error if file download fails
+- **AI Report Empty State**: Show helpful prompt when no report has been generated yet
+- **AI Tab Data Loading**: Ensure all AI features have access to current rate data
+- **AI Features Without Data**: Disable or hide AI features when rate data is unavailable
+- **Four-Tab Navigation**: Ensure smooth transitions between all four tabs including new AI Insights tab
 
 ## Design Direction
 
@@ -244,6 +277,11 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Globe for total currencies stat
   - Bell for rate alerts feature
   - CheckCircle for triggered alerts
+  - Sparkle for AI features and insights
+  - ChatCircleDots for AI chat assistant
+  - FileText for AI report generator
+  - PaperPlaneRight for sending chat messages
+  - User for user chat messages
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -274,3 +312,7 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Analytics tab components stack vertically on mobile for optimal viewing
   - Search input full width on mobile with proper spacing
   - Alert creation form fields stack vertically on small screens
+  - AI Insights tab includes 4th tab in responsive navigation
+  - AI chat messages stack properly with max-width constraints
+  - AI report viewer scrollable on mobile with touch-friendly controls
+  - AI features maintain usability on small screens with proper spacing
