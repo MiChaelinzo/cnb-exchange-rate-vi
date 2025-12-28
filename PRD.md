@@ -8,7 +8,7 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 3. **Interactive** - Practical currency conversion tools that make exchange rate data immediately useful
 
 **Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
-- This application has evolved into a sophisticated financial data platform with multiple specialized views (Current Rates, Comparison Mode, Analytics, AI Insights), real-time data processing, persistent user preferences (favorites, alerts), advanced filtering and search, interactive visualizations, multi-format exports, intelligent alert systems, and cutting-edge AI-powered analysis features. It demonstrates complex state management, batch API processing, natural language processing integration, and provides professional-grade analysis tools with artificial intelligence capabilities.
+- This application has evolved into a sophisticated financial data platform with multiple specialized views (Current Rates, Comparison Mode, Analytics, AI Insights, History), real-time data processing, persistent user preferences (favorites, alerts), advanced filtering and search, interactive visualizations, multi-format exports, intelligent alert systems, cutting-edge AI-powered analysis features, comprehensive notification management, auto-refresh scheduling, keyboard shortcuts for power users, and visual currency performance heatmaps. It demonstrates complex state management, batch API processing, natural language processing integration, and provides professional-grade analysis tools with artificial intelligence capabilities.
 
 ## Essential Features
 
@@ -145,6 +145,34 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Progression**: User navigates to History tab → Views Report Preview card showing ready-to-export status → Clicks "Export Report" → Chooses Quick Export (full report) or Custom Export Options → If custom: selects which sections to include (charts, detailed stats) → Reviews what will be included → Clicks Generate PDF → PDF report generated with professional layout → File automatically downloads → Success notification shown
 - **Success criteria**: Professional multi-page PDF with branded header and footer; key metrics dashboard with color-coded cards (overall accuracy, total predictions, best currency, recent trend); performance insights with AI-generated analysis; accuracy trend line chart showing performance over time; currency performance horizontal bar chart (top 10 currencies); trend accuracy breakdown table (bullish/bearish/stable); detailed currency statistics table with rankings; summary and actionable recommendations; page numbering and generation timestamp; clean, modern design with proper spacing; file size 200-500 KB; downloads with descriptive filename including date; custom export options allow toggling charts and detailed stats; preview card shows report contents and estimated pages; generation completes within 2-3 seconds; proper handling of long currency lists with pagination; gradient color schemes matching app theme; rounded corners and modern aesthetics; all charts and data accurately reflect analytics; recommendations tailored to actual performance
 
+### Currency Performance Heatmap
+- **Functionality**: Displays an interactive visual grid or list showing currency strength relative to CZK, color-coded from weakest (blue) to strongest (red), with multiple sorting and view options
+- **Purpose**: Provides instant visual understanding of currency performance landscape, enabling users to quickly identify strong and weak currencies at a glance
+- **Trigger**: Automatically displayed in Analytics tab when exchange rate data loads
+- **Progression**: User navigates to Analytics tab → Heatmap renders with all currencies → Each currency shown as color-coded card/row based on strength percentile → User can sort by strength, rate, or alphabetically → Toggle between grid view (compact cards) and list view (detailed rows with progress bars) → Hover over currency for detailed tooltip showing country, exact rates, and unit rate → Color intensity indicates relative strength within current dataset
+- **Success criteria**: All currencies rendered with accurate color coding; smooth transitions between grid and list views; sorting updates instantly without lag; tooltips provide detailed information on hover; strength calculated correctly as rate/amount ratio; color scale uses 5 distinct levels (very weak to very strong); grid view shows 2-6 columns responsive to screen size; list view includes visual progress bars; legend clearly explains color meanings; strength badges (Very Strong/Strong/Neutral/Weak/Very Weak) with appropriate icons (Fire/TrendUp/Minus/TrendDown/Snowflake); mobile-responsive layout; accessible color choices meeting WCAG standards
+
+### Smart Notification Center
+- **Functionality**: Centralized hub for managing all app notifications including rate alerts, prediction accuracy updates, data refreshes, and system announcements, with customizable preferences for each notification type
+- **Purpose**: Keeps users informed of important events and changes without overwhelming them, with granular control over what notifications they receive
+- **Trigger**: Accessed via Bell icon in header; notifications appear automatically based on user preferences and system events
+- **Progression**: User accesses Notification Center → Views four notification preference toggles (Rate Alerts, Prediction Accuracy, Data Updates, System Notifications) → Toggles preferences on/off → Sees list of recent notifications sorted by time → Can filter to show unread only → Notifications display with color-coded icons based on type (success/warning/error/info) → Each notification shows title, message, timestamp → Can mark individual notifications as read → Can delete individual notifications → "Mark All Read" button for bulk action → "Clear All" to remove all notifications → Preferences persist across sessions → Unread count badge visible on center access button
+- **Success criteria**: All notification types properly categorized and toggleable; notifications persist using KV storage; unread count accurate and updates in real-time; color-coded icons (green for success, orange for warning, red for error, blue for info); smooth animations for marking read/deleting; scrollable list for many notifications; empty state with helpful message when no notifications; timestamps formatted for readability; "New" badge on unread notifications; filter toggle between all/unread works instantly; clear confirmation prevents accidental data loss; mobile-responsive card layout; toast notifications appear for important events even when center is closed
+
+### Auto-Refresh Scheduler
+- **Functionality**: Automatically refreshes exchange rate data at user-configured intervals (30 seconds to 1 hour) with live countdown timer and refresh statistics tracking
+- **Purpose**: Ensures users always have current data without manual intervention, ideal for monitoring volatile currency markets or keeping dashboards up-to-date
+- **Trigger**: User enables auto-refresh toggle and selects desired interval from dropdown
+- **Progression**: User navigates to Analytics tab → Finds Auto-Refresh Scheduler card → Enables auto-refresh toggle → Selects interval (30s/1m/5m/15m/30m/1h/manual) → Scheduler activates with pulsing green indicator → Dashboard shows three metrics: Last Refresh time, Next Refresh countdown, and Refresh Count → Countdown updates every second showing time until next refresh → On each interval, data automatically refreshes → Toast notification confirms successful refresh → Refresh count increments → Settings persist across sessions → Can disable anytime or switch to manual mode
+- **Success criteria**: Intervals work accurately (30s, 1m, 5m, 15m, 30m, 1h options); countdown timer updates smoothly every second; last refresh timestamp updates on each refresh; refresh count increments correctly; green pulsing indicator visible when active; auto-refresh survives tab switches; settings persist using KV storage; "Active" badge displays when enabled; graceful error handling if refresh fails; toast notifications on success/failure; can be disabled instantly; manual mode option available; respects browser performance (doesn't overwhelm with too-frequent requests); stops refreshing when tab is inactive (optional); mobile-friendly time display format; visual distinction between active/inactive states
+
+### Keyboard Shortcuts
+- **Functionality**: Power user feature providing keyboard shortcuts for common actions and navigation throughout the app, with accessible help dialog listing all available shortcuts
+- **Purpose**: Dramatically speeds up workflow for frequent users who prefer keyboard navigation over mouse clicks
+- **Trigger**: Shortcuts always active when not focused on input fields; help dialog opened with "?" key or Shortcuts button
+- **Progression**: User presses shortcut key → Action executes immediately → Available shortcuts include: "/" (focus search), "r" (refresh data), "e" (export), "f" (toggle favorites), "1-5" (switch tabs), "?" (show shortcuts help) → Shortcuts help dialog displays categorized list (Navigation/Actions/Views/General) → Each shortcut shown with key badge and description → Dialog explains shortcuts work when not in input fields → Shortcuts button in header provides discoverable access
+- **Success criteria**: All shortcuts respond instantly; shortcuts disabled when typing in input fields to prevent conflicts; "?" opens help dialog with full shortcut list; shortcuts organized into logical categories; clean badge design for key representations; help dialog scrollable for long list; Esc closes dialogs; number keys (1-5) switch between all five tabs; "r" refreshes current view appropriately; "f" toggles favorites filter in current rates view; "/" focuses search input if available; shortcuts persist across navigation; help button accessible in header; mobile users see shortcuts button but understand keyboard shortcuts are desktop-only; no conflicts with browser shortcuts; visual feedback when actions triggered; shortcuts work across all tabs where applicable
+
 ## Edge Case Handling
 
 - **API Timeout/Network Failure**: Display friendly error message with retry button, automatic proxy fallback, and troubleshooting hints
@@ -225,6 +253,30 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Accuracy Analytics Trend Detection**: Calculate improvement trends only when sufficient data exists (6+ predictions)
 - **Accuracy Analytics Mobile View**: Ensure all charts and tables are touch-friendly and scrollable
 - **Five-Tab Navigation**: Ensure smooth transitions between all five tabs including new History tab
+- **Currency Heatmap Empty Data**: Show helpful message when no currency data available for visualization
+- **Currency Heatmap Sorting**: Instant updates when changing sort order without flickering
+- **Currency Heatmap View Toggle**: Smooth transition between grid and list views with consistent data
+- **Currency Heatmap Mobile**: Grid stacks appropriately on small screens maintaining readability
+- **Currency Heatmap Color Accessibility**: Ensure color-blind friendly palette with sufficient contrast
+- **Notification Center Empty State**: Show friendly prompt when no notifications exist
+- **Notification Center Persistence**: Ensure notifications survive page refreshes using KV storage
+- **Notification Center Preferences**: Settings persist and apply immediately to new notifications
+- **Notification Center Filter**: Unread filter handles empty results gracefully
+- **Notification Center Delete Confirmation**: Single delete works instantly; clear all requires confirmation
+- **Notification Center Overflow**: Scrollable list handles hundreds of notifications smoothly
+- **Auto-Refresh Scheduler Disabled State**: Clear messaging when auto-refresh is turned off
+- **Auto-Refresh Scheduler Manual Mode**: Explicitly prevent auto-refresh when set to manual
+- **Auto-Refresh Scheduler Countdown**: Timer updates smoothly every second without lag
+- **Auto-Refresh Scheduler Tab Switching**: Continues running in background when switching tabs
+- **Auto-Refresh Scheduler Error Handling**: Shows error toast if refresh fails, doesn't break scheduler
+- **Auto-Refresh Scheduler Persistence**: Settings survive page refreshes and browser restarts
+- **Auto-Refresh Scheduler Network Issues**: Handles failed refreshes gracefully without breaking
+- **Keyboard Shortcuts Input Fields**: Disabled when user is typing in inputs/textareas
+- **Keyboard Shortcuts Dialog**: Help dialog accessible via "?" key and button in header
+- **Keyboard Shortcuts Conflicts**: No conflicts with browser or OS-level shortcuts
+- **Keyboard Shortcuts Mobile**: Shortcuts button visible but shortcuts only work on desktop with keyboard
+- **Keyboard Shortcuts Tab Switching**: Number keys (1-5) correctly switch between all five tabs
+- **Keyboard Shortcuts Focus Management**: Search focus shortcut works when search input exists
 
 ## Design Direction
 
@@ -283,6 +335,10 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Calendar component for date selection in comparison mode
   - Popover component for calendar picker presentation
   - ScrollArea component for scrollable lists in multi-currency converter
+  - Dialog component for keyboard shortcuts help and other modals
+  - Switch component for toggle controls in preferences and settings
+  - Progress component for visual indicators in heatmap list view
+  - Tooltip component for detailed information on hover in heatmap
 - **Customizations**: 
   - Custom table styling with alternating row backgrounds for easier scanning
   - Monospace font override for numeric columns
@@ -341,6 +397,14 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - TrendUp/TrendDown for accuracy improvement indicators
   - Lightning for bi-weekly template and quick actions
   - Rocket for quarterly template and advanced features
+  - Fire for currency heatmap and hot/strong currencies
+  - Snowflake for weak/cold currencies in heatmap
+  - Minus for neutral state in heatmap
+  - Clock for auto-refresh scheduler feature
+  - PlayCircle for active auto-refresh indicator
+  - StopCircle for inactive auto-refresh state
+  - Keyboard for keyboard shortcuts feature
+  - Command for shortcuts help dialog
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -390,3 +454,12 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Accuracy analytics responsive breakpoints maintain readability across all devices
   - History tab includes 5th tab in responsive navigation with proper text sizing
   - Prediction comparison charts maintain readability on mobile devices
+  - Currency heatmap grid stacks to 2 columns on tablet, 1 column on mobile
+  - Currency heatmap list view maintains full width with horizontal scroll if needed
+  - Currency heatmap sort controls and view toggle stack appropriately on small screens
+  - Notification center cards stack properly with full-width layout on mobile
+  - Notification center action buttons remain accessible with proper touch targets
+  - Auto-refresh scheduler metrics stack vertically on mobile for readability
+  - Auto-refresh scheduler controls (toggle, select) full-width on small screens
+  - Keyboard shortcuts button visible in mobile header but explains desktop-only feature
+  - Keyboard shortcuts help dialog fully scrollable on mobile with touch-friendly dismiss

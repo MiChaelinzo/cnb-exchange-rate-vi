@@ -24,11 +24,15 @@ import { AiCurrencyPredictions } from '@/components/AiCurrencyPredictions'
 import { PredictionHistoryViewer } from '@/components/PredictionHistoryViewer'
 import { AccuracyTrendAnalytics } from '@/components/AccuracyTrendAnalytics'
 import { ReportPreview } from '@/components/ReportPreview'
+import { CurrencyHeatmap } from '@/components/CurrencyHeatmap'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { AutoRefreshScheduler } from '@/components/AutoRefreshScheduler'
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle, ClockCounterClockwise } from '@phosphor-icons/react'
+import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle, ClockCounterClockwise, Keyboard } from '@phosphor-icons/react'
 import { formatDate } from '@/lib/utils'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
@@ -39,6 +43,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [viewMode, setViewMode] = useState<ViewMode>('current')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null)
   const { data, isLoading, error, refetch } = useExchangeRates(selectedDate)
   const comparison = useComparisonRates()
   const { favorites, clearFavorites } = useFavorites()
@@ -104,6 +109,12 @@ function App() {
             </div>
             
             <div className="flex flex-wrap gap-2">
+              <KeyboardShortcuts
+                onRefresh={handleRefresh}
+                onToggleFavorites={() => setShowFavoritesOnly(prev => !prev)}
+                onFocusSearch={() => searchInputRef?.focus()}
+                onSwitchTab={(tab) => setViewMode(tab as ViewMode)}
+              />
               {(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && !isLoading && !error && data && (
                 <ExportMenu data={data} variant="outline" size="lg" />
               )}
@@ -289,12 +300,19 @@ function App() {
                 <>
                   <QuickStats rates={data.rates} />
                   
+                  <CurrencyHeatmap rates={data.rates} />
+                  
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <MultiCurrencyConverter rates={data.rates} />
                     <RateAlerts rates={data.rates} />
                   </div>
 
                   <CurrencyTrendChart rates={data.rates} />
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AutoRefreshScheduler onRefresh={refetch} />
+                    <NotificationCenter />
+                  </div>
                 </>
               )}
 
