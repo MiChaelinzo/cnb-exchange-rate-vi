@@ -132,11 +132,11 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Success criteria**: Professional report structure with clear sections; uses GPT-4o model for high-quality writing; includes specific data points and numbers; identifies top 3 strongest and weakest currencies; provides actionable recommendations; download works correctly in both formats; report formatted for readability; generation completes within 10-15 seconds; filenames include date
 
 ### Prediction History Tracking
-- **Functionality**: Tracks and stores AI-generated currency predictions over time, automatically updating with actual rates to compare forecast accuracy, displaying historical predictions with accuracy metrics
-- **Purpose**: Enables users to evaluate the reliability of AI forecasts by comparing predictions against actual rates, building trust through transparency and helping users make better-informed decisions based on proven accuracy
+- **Functionality**: Tracks and stores AI-generated currency predictions over time, automatically updating with actual rates to compare forecast accuracy, displaying historical predictions with accuracy metrics and comprehensive performance analytics
+- **Purpose**: Enables users to evaluate the reliability of AI forecasts by comparing predictions against actual rates, building trust through transparency and helping users make better-informed decisions based on proven accuracy with trend analysis and performance insights
 - **Trigger**: User saves prediction from AI Predictions tab or views History tab
-- **Progression**: User generates prediction → Clicks "Save to History" button → Prediction stored with timestamp → User navigates to History tab → Views list of past predictions → Filters by currency if desired → Clicks prediction to see detailed comparison → Views predicted vs actual rates in chart → Sees accuracy percentage and variance metrics → Actual rates auto-populate daily as time passes
-- **Success criteria**: Predictions persist across sessions using KV storage; automatic daily updates of actual rates for saved predictions; accuracy calculated as percentage comparing predicted vs actual; visual chart showing predicted vs actual overlay; color-coded accuracy badges (green >90%, yellow >70%, red <70%); detailed daily breakdown showing variance; filter by currency; delete individual or clear all predictions; dialog view for detailed analysis; graceful handling of incomplete data (pending predictions); responsive mobile layout
+- **Progression**: User generates prediction → Clicks "Save to History" button → Prediction stored with timestamp → User navigates to History tab → Views accuracy trend analytics dashboard showing overall performance, improvement trends, and currency-specific metrics → Interactive charts display accuracy evolution over time → Sees performance breakdown by currency and trend type → Scrolls to view list of past predictions → Filters by currency if desired → Clicks prediction to see detailed comparison → Views predicted vs actual rates in chart → Sees accuracy percentage and variance metrics → Actual rates auto-populate daily as time passes
+- **Success criteria**: Predictions persist across sessions using KV storage; automatic daily updates of actual rates for saved predictions; accuracy calculated as percentage comparing predicted vs actual; comprehensive analytics dashboard with overall accuracy, total predictions, best performing currency, and recent trend indicators; area chart showing accuracy evolution over time; bar chart displaying accuracy by currency; trend type performance breakdown; detailed currency performance table with rankings; color-coded accuracy badges (green >90%, yellow >70%, red <70%); performance insights showing improvement trends; responsive visualizations using Recharts; detailed daily breakdown showing variance; filter by currency; delete individual or clear all predictions; dialog view for detailed analysis; graceful handling of incomplete data (pending predictions); empty state with helpful guidance; mobile-responsive layout
 
 ## Edge Case Handling
 
@@ -205,6 +205,12 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Prediction History Accuracy Calculation**: Handle edge cases where only partial actual data is available
 - **Prediction History Delete Confirmation**: Confirm before deleting individual predictions
 - **Prediction History Clear All**: Require confirmation before clearing entire history
+- **Accuracy Analytics No Data**: Show empty state when no predictions have actual rates yet
+- **Accuracy Analytics Partial Data**: Calculate metrics with available data, show progress indicators
+- **Accuracy Analytics Chart Rendering**: Handle edge cases with minimal data points (< 3 predictions)
+- **Accuracy Analytics Currency Rankings**: Dynamically update as new predictions are added
+- **Accuracy Analytics Trend Detection**: Calculate improvement trends only when sufficient data exists (6+ predictions)
+- **Accuracy Analytics Mobile View**: Ensure all charts and tables are touch-friendly and scrollable
 - **Five-Tab Navigation**: Ensure smooth transitions between all five tabs including new History tab
 
 ## Design Direction
@@ -317,8 +323,9 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - CheckCircle for high accuracy predictions
   - XCircle for low accuracy predictions
   - MinusCircle for predictions with no actual data
-  - Target for prediction target metrics
+  - Target for prediction target metrics and accuracy analytics
   - Calendar for prediction creation dates
+  - TrendUp/TrendDown for accuracy improvement indicators
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -360,5 +367,9 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Prediction history list cards stack properly on mobile
   - Prediction history dialog scrollable on mobile with touch-friendly controls
   - Prediction history filter dropdown full-width on small screens
+  - Accuracy analytics charts stack vertically on mobile with adjusted heights
+  - Accuracy analytics stats cards grid stacks to single column on small screens
+  - Accuracy analytics currency performance table scrollable horizontally on mobile
+  - Accuracy analytics responsive breakpoints maintain readability across all devices
   - History tab includes 5th tab in responsive navigation with proper text sizing
   - Prediction comparison charts maintain readability on mobile devices

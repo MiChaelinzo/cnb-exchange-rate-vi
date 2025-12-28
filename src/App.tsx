@@ -3,6 +3,7 @@ import { useExchangeRates } from '@/hooks/use-exchange-rates'
 import { useComparisonRates } from '@/hooks/use-comparison-rates'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useAutoUpdatePredictionHistory } from '@/hooks/use-auto-update-prediction-history'
+import { usePredictionHistory } from '@/hooks/use-prediction-history'
 import { ExchangeRateTable } from '@/components/ExchangeRateTable'
 import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleton'
 import { CurrencyConverter } from '@/components/CurrencyConverter'
@@ -18,6 +19,7 @@ import { AiChatAssistant } from '@/components/AiChatAssistant'
 import { AiReportGenerator } from '@/components/AiReportGenerator'
 import { AiCurrencyPredictions } from '@/components/AiCurrencyPredictions'
 import { PredictionHistoryViewer } from '@/components/PredictionHistoryViewer'
+import { AccuracyTrendAnalytics } from '@/components/AccuracyTrendAnalytics'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,6 +38,7 @@ function App() {
   const { data, isLoading, error, refetch } = useExchangeRates(selectedDate)
   const comparison = useComparisonRates()
   const { favorites, clearFavorites } = useFavorites()
+  const { history: predictionHistory } = usePredictionHistory()
 
   useAutoUpdatePredictionHistory(data?.rates)
 
@@ -319,9 +322,13 @@ function App() {
 
             <TabsContent value="history" className="space-y-8 mt-8">
               {data && (
-                <PredictionHistoryViewer 
-                  currencies={data.rates.map(r => r.currencyCode).filter((v, i, a) => a.indexOf(v) === i)}
-                />
+                <>
+                  <AccuracyTrendAnalytics history={predictionHistory} />
+                  
+                  <PredictionHistoryViewer 
+                    currencies={data.rates.map(r => r.currencyCode).filter((v, i, a) => a.indexOf(v) === i)}
+                  />
+                </>
               )}
               {!data && isLoading && (
                 <ExchangeRateTableSkeleton />
