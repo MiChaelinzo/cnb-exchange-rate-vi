@@ -10,6 +10,7 @@ import { CurrencyConverter } from '@/components/CurrencyConverter'
 import { CurrencyTrendChart } from '@/components/CurrencyTrendChart'
 import { ComparisonDateSelector } from '@/components/ComparisonDateSelector'
 import { RateComparisonTable } from '@/components/RateComparisonTable'
+import { ComparisonReportExport } from '@/components/ComparisonReportExport'
 import { ExportMenu } from '@/components/ExportMenu'
 import { QuickStats } from '@/components/QuickStats'
 import { MultiCurrencyConverter } from '@/components/MultiCurrencyConverter'
@@ -228,6 +229,22 @@ function App() {
             </TabsContent>
 
             <TabsContent value="comparison" className="space-y-8 mt-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Multi-Period Comparison</h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Compare exchange rates across different time periods
+                  </p>
+                </div>
+                {comparison.comparisons.length > 0 && (
+                  <ComparisonReportExport 
+                    comparisons={comparison.comparisons}
+                    variant="default"
+                    size="lg"
+                  />
+                )}
+              </div>
+
               <ComparisonDateSelector
                 selectedDates={comparison.comparisons.map(c => c.date)}
                 onAddDate={handleAddComparisonDate}

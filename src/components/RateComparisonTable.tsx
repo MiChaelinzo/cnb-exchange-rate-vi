@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CaretUp, CaretDown, X, Info, TrendUp, TrendDown, Equals, CalendarPlus } from '@phosphor-icons/react'
 import { formatDate, cn } from '@/lib/utils'
+import { ComparisonReportExport } from '@/components/ComparisonReportExport'
 
 interface RateComparisonTableProps {
   comparisons: ComparisonDataPoint[]
@@ -136,27 +137,33 @@ export function RateComparisonTable({ comparisons, onRemoveDate }: RateCompariso
             <div>
               <CardTitle className="text-2xl">Rate Comparison</CardTitle>
               <CardDescription className="text-base mt-1">
-                Comparing {comparisons.length} date{comparisons.length !== 1 ? 's' : ''}
+                Comparing {comparisons.length} date{comparisons.length !== 1 ? 's' : ''} • {sortedCodes.length} currencies
               </CardDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {comparisons.map((comp) => (
-                <Badge
-                  key={comp.date}
-                  variant="secondary"
-                  className="text-sm px-3 py-1 gap-2"
+            <ComparisonReportExport 
+              comparisons={comparisons}
+              variant="outline"
+              size="sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {comparisons.map((comp) => (
+              <Badge
+                key={comp.date}
+                variant="secondary"
+                className="text-sm px-3 py-1 gap-2"
+              >
+                {formatDate(comp.date)}
+                <button
+                  onClick={() => onRemoveDate(comp.date)}
+                  className="hover:text-destructive transition-colors"
+                  title="Remove this date"
                 >
-                  {formatDate(comp.date)}
-                  <button
-                    onClick={() => onRemoveDate(comp.date)}
-                    className="hover:text-destructive transition-colors"
-                    title="Remove this date"
-                  >
-                    <X size={14} weight="bold" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
+                  <X size={14} weight="bold" />
+                </button>
+              </Badge>
+            ))}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
