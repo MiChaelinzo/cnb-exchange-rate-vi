@@ -34,9 +34,17 @@ export function useHistoricalRates(
 
     try {
       const result = await fetchHistoricalRates(currencyCode, days)
-      setData(result)
+      
+      if (result.length === 0) {
+        setError(`No historical data available for ${currencyCode}. The currency may not be tracked by CNB.`)
+        setData([])
+      } else {
+        setData(result)
+      }
     } catch (err) {
       if (err instanceof CNBApiError) {
+        setError(err.message)
+      } else if (err instanceof Error) {
         setError(err.message)
       } else {
         setError('Failed to fetch historical data')

@@ -63,6 +63,10 @@ export async function fetchExchangeRates(date?: string): Promise<ExchangeRateDat
   }
 }
 
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 export async function fetchHistoricalRates(
   currencyCode: string,
   days: number = 30
@@ -70,35 +74,59 @@ export async function fetchHistoricalRates(
   const dates: string[] = []
   const today = new Date()
   
-  for (let i = 0; i < days; i++) {
+  let daysAdded = 0
+  let daysChecked = 0
+  const maxDaysToCheck = days * 2
+  
+  while (daysAdded < days && daysChecked < maxDaysToCheck) {
     const date = new Date(today)
-    date.setDate(date.getDate() - i)
+    date.setDate(date.getDate() - daysChecked)
     
     if (date.getDay() !== 0 && date.getDay() !== 6) {
       dates.push(date.toISOString().split('T')[0])
+      daysAdded++
+    }
+    daysChecked++
+  }
+
+  const historicalData: Array<{ date: string; rate: number }> = []
+  let failedAttempts = 0
+  const maxFailures = Math.floor(dates.length * 0.3)
+  
+  for (let i = 0; i < dates.length; i++) {
+    try {
+      const data = await fetchExchangeRates(dates[i])
+      const rate = data.rates.find(r => r.currencyCode === currencyCode)
+      
+      if (rate) {
+        historicalData.push({
+          date: dates[i],
+          rate: rate.rate / rate.amount,
+        })
+      } else {
+        failedAttempts++
+      }
+      
+      if (i < dates.length - 1) {
+        await delay(100)
+      }
+    } catch (error) {
+      failedAttempts++
+      console.warn(`Failed to fetch data for ${dates[i]}:`, error)
+      
+      if (failedAttempts > maxFailures) {
+        break
+      }
+      
+      continue
     }
   }
 
-  const historicalData = await Promise.all(
-    dates.map(async (date) => {
-      try {
-        const data = await fetchExchangeRates(date)
-        const rate = data.rates.find(r => r.currencyCode === currencyCode)
-        
-        if (rate) {
-          return {
-            date,
-            rate: rate.rate / rate.amount,
-          }
-        }
-        return null
-      } catch {
-        return null
-      }
-    })
-  )
+  if (historicalData.length === 0) {
+    throw new CNBApiError(
+      `No historical data found for ${currencyCode}. The currency may not be available in CNB records.`
+    )
+  }
 
-  return historicalData
-    .filter((item): item is { date: string; rate: number } => item !== null)
-    .reverse()
+  return historicalData.reverse()
 }

@@ -20,7 +20,7 @@ interface CurrencyTrendChartProps {
 
 export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
   const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
-  const [timeRange, setTimeRange] = useState<number>(30)
+  const [timeRange, setTimeRange] = useState<number>(7)
   const [chartType, setChartType] = useState<ChartType>('line')
 
   const { data: historicalData, isLoading, error, refetch } = useHistoricalRates(selectedCurrency, timeRange)
@@ -307,17 +307,43 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
           <Alert variant="destructive" className="mb-4">
             <Warning size={20} weight="fill" />
             <AlertDescription className="ml-2">
-              {error}
+              <div className="space-y-2">
+                <p className="font-medium">{error}</p>
+                <p className="text-sm">
+                  This might happen if:
+                </p>
+                <ul className="text-sm list-disc list-inside ml-2 space-y-1">
+                  <li>The currency is not available in CNB historical records</li>
+                  <li>Network connectivity issues</li>
+                  <li>CNB API is temporarily unavailable</li>
+                </ul>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                  className="mt-2 gap-2"
+                >
+                  <ArrowsClockwise size={14} weight="bold" />
+                  Try Again
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}
 
         {isLoading && (
           <div className="space-y-4">
-            <Skeleton className="h-[400px] w-full rounded-lg" />
-            <div className="flex gap-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-32" />
+            <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+              <ArrowsClockwise size={48} weight="bold" className="text-primary animate-spin" />
+              <div className="text-center">
+                <p className="text-lg font-medium mb-1">Loading Historical Data</p>
+                <p className="text-sm text-muted-foreground">
+                  Fetching {timeRange} days of {selectedCurrency} exchange rates...
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This may take a moment as we retrieve data from CNB
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -604,9 +630,34 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Warning size={48} weight="light" className="text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">No Historical Data Available</p>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Unable to retrieve historical data for {selectedCurrency}. Try selecting a different currency or time range.
+            <p className="text-sm text-muted-foreground max-w-md mb-4">
+              Unable to retrieve historical data for {selectedCurrency}. Try selecting a different currency or a shorter time range.
             </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTimeRange(7)}
+                disabled={timeRange === 7}
+              >
+                Try 7 Days
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const commonCurrencies = ['EUR', 'GBP', 'JPY', 'AUD', 'CAD']
+                  const availableCurrency = sortedRates.find(r => 
+                    commonCurrencies.includes(r.currencyCode) && r.currencyCode !== selectedCurrency
+                  )
+                  if (availableCurrency) {
+                    setSelectedCurrency(availableCurrency.currencyCode)
+                  }
+                }}
+              >
+                Try Different Currency
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
