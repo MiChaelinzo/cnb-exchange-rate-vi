@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Users, Globe, Bell, UserPlus } from '@phosphor-icons/react'
@@ -6,14 +6,43 @@ import { CreateWatchlistDialog } from './CreateWatchlistDialog'
 import { SharedWatchlistManager } from './SharedWatchlistManager'
 import { WatchlistInvites } from './WatchlistInvites'
 import { PublicWatchlistsBrowser } from './PublicWatchlistsBrowser'
+import { WatchlistActivityPanel } from './WatchlistActivityPanel'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useSharedWatchlists, type SharedWatchlist } from '@/hooks/use-shared-watchlists'
 
 interface CollaborationDashboardProps {
-  onWatchlistSelect: (currencies: string[]) => void
+  onWatchlistSelect: (currencies: string[], watchlist: SharedWatchlist | null) => void
 }
 
 export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashboardProps) {
   const [activeTab, setActiveTab] = useState('my-watchlists')
+  const [selectedWatchlist, setSelectedWatchlist] = useState<SharedWatchlist | null>(null)
+  const [currentUserId, setCurrentUserId] = useState('')
+  const { watchlists } = useSharedWatchlists()
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const user = await window.spark.user()
+      if (user) {
+        setCurrentUserId(String(user.id))
+      }
+    }
+    loadUser()
+  }, [])
+
+  useEffect(() => {
+    if (selectedWatchlist) {
+      const updated = watchlists.find(w => w.id === selectedWatchlist.id)
+      if (updated) {
+        setSelectedWatchlist(updated)
+      }
+    }
+  }, [watchlists, selectedWatchlist])
+
+  const handleWatchlistSelect = (currencies: string[], watchlist: SharedWatchlist | null) => {
+    onWatchlistSelect(currencies, watchlist)
+    setSelectedWatchlist(watchlist)
+  }
 
   return (
     <div className="space-y-6">
@@ -40,26 +69,39 @@ export function CollaborationDashboard({ onWatchlistSelect }: CollaborationDashb
 
       <WatchlistInvites />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-2xl grid-cols-2">
-          <TabsTrigger value="my-watchlists" className="gap-2">
-            <Users size={20} weight="duotone" />
-            My Watchlists
-          </TabsTrigger>
-          <TabsTrigger value="public" className="gap-2">
-            <Globe size={20} weight="duotone" />
-            Browse Public
-          </TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={selectedWatchlist ? 'lg:col-span-2' : 'lg:col-span-3'}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full max-w-2xl grid-cols-2">
+              <TabsTrigger value="my-watchlists" className="gap-2">
+                <Users size={20} weight="duotone" />
+                My Watchlists
+              </TabsTrigger>
+              <TabsTrigger value="public" className="gap-2">
+                <Globe size={20} weight="duotone" />
+                Browse Public
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="my-watchlists" className="mt-6">
-          <SharedWatchlistManager onWatchlistSelect={onWatchlistSelect} />
-        </TabsContent>
+            <TabsContent value="my-watchlists" className="mt-6">
+              <SharedWatchlistManager onWatchlistSelect={handleWatchlistSelect} />
+            </TabsContent>
 
-        <TabsContent value="public" className="mt-6">
-          <PublicWatchlistsBrowser />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="public" className="mt-6">
+              <PublicWatchlistsBrowser />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {selectedWatchlist && currentUserId && (
+          <div className="lg:col-span-1">
+            <WatchlistActivityPanel 
+              watchlist={selectedWatchlist} 
+              currentUserId={currentUserId}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -45,6 +45,7 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('current')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [sharedWatchlistCurrencies, setSharedWatchlistCurrencies] = useState<string[]>([])
+  const [selectedSharedWatchlist, setSelectedSharedWatchlist] = useState<any>(null)
   const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null)
   const { data, isLoading, error, refetch } = useExchangeRates(selectedDate)
   const comparison = useComparisonRates()
@@ -404,15 +405,22 @@ function App() {
             </TabsContent>
 
             <TabsContent value="collaborate" className="space-y-8 mt-8">
-              <CollaborationDashboard onWatchlistSelect={setSharedWatchlistCurrencies} />
+              <CollaborationDashboard onWatchlistSelect={(currencies, watchlist) => {
+                setSharedWatchlistCurrencies(currencies)
+                setSelectedSharedWatchlist(watchlist)
+              }} />
               
               {sharedWatchlistCurrencies.length > 0 && data && (
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Shared Watchlist Currencies</CardTitle>
-                    <CardDescription>
-                      Viewing currencies from selected shared watchlist
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-2xl">Shared Watchlist Currencies</CardTitle>
+                        <CardDescription>
+                          {selectedSharedWatchlist ? `Viewing "${selectedSharedWatchlist.name}"` : 'Viewing currencies from selected shared watchlist'}
+                        </CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <ExchangeRateTable 

@@ -7,21 +7,35 @@ import { Separator } from '@/components/ui/separator'
 import { Users, Crown, PencilSimple, Eye, Globe, Lock, Trash, SignOut, Calendar, Clock } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ActiveViewersIndicator } from './ActiveViewersIndicator'
 
 interface WatchlistCardProps {
   watchlist: SharedWatchlist
   currentUserId: string
   onSelect: (watchlist: SharedWatchlist) => void
   isSelected: boolean
+  onUpdateActive: (watchlistId: string) => void
 }
 
-export function WatchlistCard({ watchlist, currentUserId, onSelect, isSelected }: WatchlistCardProps) {
+export function WatchlistCard({ watchlist, currentUserId, onSelect, isSelected, onUpdateActive }: WatchlistCardProps) {
   const { deleteWatchlist, leaveWatchlist } = useSharedWatchlists()
   const [showConfirm, setShowConfirm] = useState(false)
   
   const isOwner = watchlist.ownerId === currentUserId
   const currentMember = watchlist.members.find(m => m.id === currentUserId)
   const roleIcon = currentMember?.role === 'owner' ? Crown : currentMember?.role === 'editor' ? PencilSimple : Eye
+
+  useEffect(() => {
+    if (isSelected) {
+      onUpdateActive(watchlist.id)
+      
+      const interval = setInterval(() => {
+        onUpdateActive(watchlist.id)
+      }, 30000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [isSelected, watchlist.id, onUpdateActive])
   
   const handleDelete = () => {
     deleteWatchlist(watchlist.id)
@@ -63,15 +77,22 @@ export function WatchlistCard({ watchlist, currentUserId, onSelect, isSelected }
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users size={16} />
-            <span>{watchlist.members.length} member{watchlist.members.length !== 1 ? 's' : ''}</span>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Users size={16} />
+              <span>{watchlist.members.length} member{watchlist.members.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar size={16} />
+              <span>{watchlist.currencies.length} {watchlist.currencies.length === 1 ? 'currency' : 'currencies'}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Calendar size={16} />
-            <span>{watchlist.currencies.length} {watchlist.currencies.length === 1 ? 'currency' : 'currencies'}</span>
-          </div>
+          
+          <ActiveViewersIndicator 
+            members={watchlist.members} 
+            currentUserId={currentUserId}
+          />
         </div>
         
         <div className="flex flex-wrap gap-1">
@@ -141,11 +162,11 @@ export function WatchlistCard({ watchlist, currentUserId, onSelect, isSelected }
 }
 
 interface SharedWatchlistManagerProps {
-  onWatchlistSelect: (currencies: string[]) => void
+  onWatchlistSelect: (currencies: string[], watchlist: SharedWatchlist | null) => void
 }
 
 export function SharedWatchlistManager({ onWatchlistSelect }: SharedWatchlistManagerProps) {
-  const { watchlists, getUserWatchlists } = useSharedWatchlists()
+  const { watchlists, getUserWatchlists, updateLastActive } = useSharedWatchlists()
   const [userWatchlists, setUserWatchlists] = useState<SharedWatchlist[]>([])
   const [selectedWatchlist, setSelectedWatchlist] = useState<SharedWatchlist | null>(null)
   const [currentUserId, setCurrentUserId] = useState('')
@@ -162,13 +183,17 @@ export function SharedWatchlistManager({ onWatchlistSelect }: SharedWatchlistMan
     loadData()
   }, [watchlists])
 
+  const handleUpdateActive = (watchlistId: string) => {
+    updateLastActive(watchlistId)
+  }
+
   const handleSelectWatchlist = (watchlist: SharedWatchlist) => {
     if (selectedWatchlist?.id === watchlist.id) {
       setSelectedWatchlist(null)
-      onWatchlistSelect([])
+      onWatchlistSelect([], null)
     } else {
       setSelectedWatchlist(watchlist)
-      onWatchlistSelect(watchlist.currencies)
+      onWatchlistSelect(watchlist.currencies, watchlist)
     }
   }
 
@@ -192,6 +217,7 @@ export function SharedWatchlistManager({ onWatchlistSelect }: SharedWatchlistMan
           currentUserId={currentUserId}
           onSelect={handleSelectWatchlist}
           isSelected={selectedWatchlist?.id === watchlist.id}
+          onUpdateActive={handleUpdateActive}
         />
       ))}
     </div>
