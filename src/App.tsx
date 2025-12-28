@@ -9,6 +9,7 @@ import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleto
 import { CurrencyConverter } from '@/components/CurrencyConverter'
 import { CurrencyTrendChart } from '@/components/CurrencyTrendChart'
 import { ComparisonDateSelector } from '@/components/ComparisonDateSelector'
+import { ComparisonTemplates } from '@/components/ComparisonTemplates'
 import { RateComparisonTable } from '@/components/RateComparisonTable'
 import { ComparisonReportExport } from '@/components/ComparisonReportExport'
 import { ExportMenu } from '@/components/ExportMenu'
@@ -65,6 +66,18 @@ function App() {
       loading: 'Fetching data for selected date...',
       success: 'Date added to comparison',
       error: (err) => err || 'Failed to add date',
+    })
+  }
+
+  const handleApplyTemplate = async (dates: string[]) => {
+    comparison.clear()
+    
+    const promises = dates.map(date => comparison.addDate(date))
+    
+    toast.promise(Promise.all(promises), {
+      loading: `Loading template with ${dates.length} dates...`,
+      success: `Template applied successfully! ${dates.length} dates loaded.`,
+      error: 'Failed to apply template. Some dates may not have loaded.',
     })
   }
 
@@ -244,6 +257,11 @@ function App() {
                   />
                 )}
               </div>
+
+              <ComparisonTemplates 
+                onApplyTemplate={handleApplyTemplate}
+                isLoading={comparison.isLoading}
+              />
 
               <ComparisonDateSelector
                 selectedDates={comparison.comparisons.map(c => c.date)}

@@ -62,11 +62,11 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Success criteria**: Files download correctly with all exchange rate data; CSV is spreadsheet-compatible; JSON is properly structured with metadata; PDF is readable and printable; filenames include date for organization; toast notifications confirm successful exports
 
 ### Multi-Date Comparison Mode
-- **Functionality**: Enables users to select and compare exchange rates across multiple dates (up to 5) with visual change indicators showing percentage differences from a baseline date
-- **Purpose**: Provides powerful analysis tools for tracking currency rate movements over custom time periods, helping users identify trends and make informed financial decisions
-- **Trigger**: User switches to "Comparison Mode" tab and selects dates via calendar or quick-add buttons
-- **Progression**: User switches to comparison tab → Selects first date (becomes baseline) → Adds additional dates using calendar picker or quick buttons (yesterday, 1 week ago, 1 month ago, 3 months ago) → Each date is fetched from CNB API → Comparison table displays with all currencies → Shows rate values and percentage changes from baseline → Color-coded indicators (green=increase, red=decrease) → User can filter currencies, sort by country/code → Remove individual dates or clear all → Refresh all comparison data
-- **Success criteria**: Up to 5 dates can be selected; weekends auto-excluded; percentage changes accurately calculated from baseline date; color-coded trend indicators (green up, red down, gray neutral); sortable and filterable comparison table; smooth loading states with toast notifications; individual date removal without refetching; clear visual distinction between baseline and comparison dates; mobile-responsive with proper date badge wrapping
+- **Functionality**: Enables users to select and compare exchange rates across multiple dates (up to 5) with visual change indicators showing percentage differences from a baseline date, including quick templates for common time periods
+- **Purpose**: Provides powerful analysis tools for tracking currency rate movements over custom time periods, helping users identify trends and make informed financial decisions with standardized comparison periods
+- **Trigger**: User switches to "Comparison Mode" tab and selects dates via calendar, quick-add buttons, or pre-configured templates
+- **Progression**: User switches to comparison tab → Sees quick comparison templates (Weekly, Bi-Weekly, Monthly, Quarterly) → Can click template to instantly load pre-configured dates OR manually select first date (becomes baseline) → Adds additional dates using calendar picker or quick buttons (yesterday, 1 week ago, 1 month ago, 3 months ago) → Each date is fetched from CNB API → Comparison table displays with all currencies → Shows rate values and percentage changes from baseline → Color-coded indicators (green=increase, red=decrease) → User can filter currencies, sort by country/code → Remove individual dates or clear all → Refresh all comparison data → Apply different template to replace current selection
+- **Success criteria**: Up to 5 dates can be selected; weekends auto-excluded in templates and manual selection; four pre-configured templates (Weekly: today + 1,3,5,7 days ago; Bi-Weekly: today + 3,7,10,14 days ago; Monthly: today + 1,2,3,4 weeks ago; Quarterly: today + 1,2,3 months ago); template application clears existing dates and loads all template dates; percentage changes accurately calculated from baseline date; color-coded trend indicators (green up, red down, gray neutral); sortable and filterable comparison table; smooth loading states with toast notifications for template loading; individual date removal without refetching; clear visual distinction between baseline and comparison dates; templates auto-adjust weekends to nearest weekday; informative template descriptions; mobile-responsive template grid and date badge wrapping
 
 ### Currency Favorites and Watchlist
 - **Functionality**: Users can mark specific currencies as favorites by clicking a star icon, creating a personalized watchlist for quick access to preferred currencies
@@ -173,6 +173,12 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Comparison Mode - Single Date**: Show only rate values without percentage changes when comparing single date
 - **Comparison Mode - API Failures**: Handle individual date fetch failures gracefully without breaking entire comparison
 - **Comparison Mode - Tab Switching**: Preserve both current rates and comparison data when switching between tabs
+- **Comparison Templates Empty State**: Show templates prominently when no dates are selected to guide users
+- **Comparison Templates Loading State**: Disable template buttons during batch loading to prevent conflicts
+- **Comparison Templates Weekend Handling**: All template-generated dates automatically skip weekends
+- **Comparison Templates Clear Previous**: Applying a new template clears existing dates to avoid confusion
+- **Comparison Templates Error Recovery**: If some dates fail to load in template, show partial results with error notification
+- **Comparison Templates Mobile Layout**: Template grid stacks appropriately on smaller screens while maintaining usability
 - **Favorites Persistence**: Ensure favorites survive page refreshes and session changes using KV storage
 - **Star Icon Interaction**: Provide immediate visual feedback when toggling favorites without page reload
 - **Search No Results**: Display helpful empty state when search query returns no matches
@@ -333,6 +339,8 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Target for prediction target metrics and accuracy analytics
   - Calendar for prediction creation dates
   - TrendUp/TrendDown for accuracy improvement indicators
+  - Lightning for bi-weekly template and quick actions
+  - Rocket for quarterly template and advanced features
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -357,6 +365,8 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Comparison table remains horizontally scrollable with fixed currency column
   - Tab navigation switches to full-width buttons with proper text sizing on mobile
   - Watchlist button and favorite stars remain accessible with proper touch targets
+  - Comparison templates grid stacks to single column on mobile with full-width cards
+  - Template selection buttons maintain proper touch targets (min 44px height) on mobile
   - Star icons in table maintain 44px minimum touch area on mobile
   - Quick stats grid stacks to single column on mobile
   - Multi-currency converter grid becomes single column on small screens
