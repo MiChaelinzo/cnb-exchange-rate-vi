@@ -4,9 +4,11 @@ const CNB_API_BASE = 'https://api.cnb.cz/cnbapi'
 const CORS_PROXIES = [
   'https://corsproxy.io/?',
   'https://api.allorigins.win/raw?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
 ]
 
 let currentProxyIndex = 0
+let workingProxy: string | null = null
 
 export class CNBApiError extends Error {
   constructor(message: string, public statusCode?: number) {
@@ -18,6 +20,39 @@ export class CNBApiError extends Error {
 async function fetchWithRetry(endpoint: string, maxRetries: number = 2): Promise<Response> {
   let lastError: Error | null = null
   
+  if (workingProxy) {
+    try {
+      const proxiedEndpoint = `${workingProxy}${encodeURIComponent(endpoint)}`
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      
+      const response = await fetch(proxiedEndpoint, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (response.ok) {
+        return response
+      }
+      
+      if (response.status === 404) {
+        throw new CNBApiError('Data not found for the specified date', 404)
+      }
+      
+      workingProxy = null
+    } catch (error) {
+      if (error instanceof CNBApiError) {
+        throw error
+      }
+      workingProxy = null
+    }
+  }
+  
   for (let proxyAttempt = 0; proxyAttempt < CORS_PROXIES.length; proxyAttempt++) {
     const proxyIndex = (currentProxyIndex + proxyAttempt) % CORS_PROXIES.length
     const proxy = CORS_PROXIES[proxyIndex]
@@ -26,7 +61,7 @@ async function fetchWithRetry(endpoint: string, maxRetries: number = 2): Promise
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000)
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
         
         const response = await fetch(proxiedEndpoint, {
           method: 'GET',
@@ -40,6 +75,7 @@ async function fetchWithRetry(endpoint: string, maxRetries: number = 2): Promise
         
         if (response.ok) {
           currentProxyIndex = proxyIndex
+          workingProxy = proxy
           return response
         }
         
@@ -56,7 +92,7 @@ async function fetchWithRetry(endpoint: string, maxRetries: number = 2): Promise
         }
         
         if (attempt < maxRetries) {
-          await delay(500 * (attempt + 1))
+          await delay(300 * (attempt + 1))
         }
       }
     }
@@ -130,33 +166,25 @@ function getWorkingDates(startDate: Date, numDays: number): string[] {
 
 async function fetchRatesInBatches(
   dates: string[],
-  batchSize: number = 5
+  batchSize: number = 2
 ): Promise<Map<string, ExchangeRateData>> {
   const results = new Map<string, ExchangeRateData>()
   
   for (let i = 0; i < dates.length; i += batchSize) {
     const batch = dates.slice(i, i + batchSize)
     
-    const batchPromises = batch.map(async (date) => {
+    for (const date of batch) {
       try {
         const data = await fetchExchangeRates(date)
-        return { date, data }
+        results.set(date, data)
+        await delay(200)
       } catch (error) {
         console.warn(`Failed to fetch data for ${date}:`, error)
-        return null
       }
-    })
-    
-    const batchResults = await Promise.allSettled(batchPromises)
-    
-    batchResults.forEach((result) => {
-      if (result.status === 'fulfilled' && result.value) {
-        results.set(result.value.date, result.value.data)
-      }
-    })
+    }
     
     if (i + batchSize < dates.length) {
-      await delay(300)
+      await delay(500)
     }
   }
   
@@ -171,7 +199,7 @@ export async function fetchHistoricalRates(
   
   console.log(`Fetching ${days} days of historical data for ${currencyCode}...`)
   
-  const rateDataMap = await fetchRatesInBatches(dates, 3)
+  const rateDataMap = await fetchRatesInBatches(dates, 2)
   
   const historicalData: Array<{ date: string; rate: number }> = []
   let currencyNotFoundCount = 0
@@ -192,22 +220,29 @@ export async function fetchHistoricalRates(
   })
   
   console.log(`Retrieved ${historicalData.length} of ${dates.length} data points for ${currencyCode}`)
+  console.log(`Successfully fetched ${rateDataMap.size} of ${dates.length} date requests`)
   
   if (historicalData.length === 0) {
+    if (rateDataMap.size === 0) {
+      throw new CNBApiError(
+        `Unable to fetch historical data due to network issues. 0 of ${dates.length} requests succeeded.\n\nThis might happen if:\n• Network connectivity issues\n• CORS proxy services are unavailable\n• CNB API is temporarily down\n\nPlease try again in a few moments or select a shorter time range.`
+      )
+    }
+    
     if (currencyNotFoundCount > 0) {
       throw new CNBApiError(
-        `Currency ${currencyCode} not found in CNB records. This currency may not be tracked by the Czech National Bank.`
+        `No historical data found for ${currencyCode}. The currency may not be available in CNB records.\n\nThis might happen if:\n• The currency is not tracked by the Czech National Bank\n• The currency code is incorrect\n\nTry selecting a different currency like EUR, USD, or GBP.`
       )
     } else {
       throw new CNBApiError(
-        `Unable to fetch historical data. ${rateDataMap.size} of ${dates.length} requests succeeded. Please try again or select a shorter time range.`
+        `Unable to fetch historical data. ${rateDataMap.size} of ${dates.length} requests succeeded.\n\nPlease try:\n• Selecting a shorter time range (7 days)\n• Refreshing the page\n• Trying again in a few moments`
       )
     }
   }
   
-  if (historicalData.length < Math.floor(dates.length * 0.4)) {
+  if (historicalData.length < Math.floor(dates.length * 0.3)) {
     console.warn(
-      `Only ${historicalData.length} of ${dates.length} data points retrieved. Some dates may be unavailable.`
+      `Low data availability: ${historicalData.length} of ${dates.length} data points retrieved. Some dates may be unavailable.`
     )
   }
   

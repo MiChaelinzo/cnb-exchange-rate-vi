@@ -322,12 +322,9 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
             <Warning size={20} weight="fill" />
             <AlertDescription className="ml-2">
               <div className="space-y-2">
-                <p className="font-medium">{error}</p>
+                <div className="font-medium whitespace-pre-line">{error}</div>
                 {!rates.some(r => r.currencyCode === selectedCurrency) ? (
                   <>
-                    <p className="text-sm">
-                      The currency <strong>{selectedCurrency}</strong> is not available in the current exchange rate data.
-                    </p>
                     <Button
                       variant="outline"
                       size="sm"
@@ -346,14 +343,6 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                   </>
                 ) : (
                   <>
-                    <p className="text-sm">
-                      This might happen if:
-                    </p>
-                    <ul className="text-sm list-disc list-inside ml-2 space-y-1">
-                      <li>The currency is not available in CNB historical records</li>
-                      <li>Network connectivity issues</li>
-                      <li>CNB API is temporarily unavailable</li>
-                    </ul>
                     <div className="flex gap-2 mt-2">
                       <Button
                         variant="outline"
@@ -364,6 +353,15 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                         <ArrowsClockwise size={14} weight="bold" />
                         Try Again
                       </Button>
+                      {timeRange > 7 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setTimeRange(7)}
+                        >
+                          Try 7 Days
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
