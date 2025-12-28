@@ -1,13 +1,27 @@
-# .NET Backend Implementation Guide
+# .NET Backend Implementation Guide (Optional)
 
-This guide provides step-by-step instructions for implementing the required .NET backend API to complete the Omnixient Technical Assessment.
+This guide provides step-by-step instructions for implementing an optional .NET backend API as an alternative to the CORS proxy solution.
 
 ## Overview
 
-The CNB API does not allow direct browser requests due to CORS restrictions. Your .NET backend will:
-1. Fetch exchange rate data from the CNB API
-2. Parse and transform the data
-3. Expose it through a REST endpoint that the frontend can consume
+**Note:** The frontend application is already fully functional and fetches real CNB data using a CORS proxy service. This backend implementation is optional and provides an alternative architecture if you prefer to have your own backend service.
+
+### Current Solution (Default)
+The frontend uses a public CORS proxy (corsproxy.io) to fetch data directly from CNB API:
+- ✅ No backend required
+- ✅ Simple deployment
+- ✅ Real-time CNB data
+- ⚠️ Depends on third-party proxy service
+
+### Alternative Backend Solution (This Guide)
+Implement your own .NET backend that:
+1. Fetches exchange rate data from the CNB API
+2. Parses and transforms the data
+3. Exposes it through a REST endpoint that the frontend can consume
+- ✅ Full control over API
+- ✅ Can add caching, rate limiting, etc.
+- ✅ No dependency on third-party services
+- ⚠️ Requires backend deployment and maintenance
 
 ## Prerequisites
 
@@ -363,18 +377,23 @@ curl "https://localhost:5001/api/exchangerates?date=2025-01-15"
 
 ## Step 10: Connect Frontend to Backend
 
-Update the frontend `src/lib/api.ts`:
+To switch from the CORS proxy to your custom backend, update the frontend `src/lib/api.ts`:
 
 ```typescript
-// Replace the CNB_API_BASE constant
+// Replace these lines:
+const CNB_API_BASE = 'https://api.cnb.cz/cnbapi'
+const CORS_PROXY = 'https://corsproxy.io/?'
+
+// With your backend URL:
 const BACKEND_API_BASE = 'https://localhost:5001/api'  // Your backend URL
 
 export async function fetchExchangeRates(date?: string): Promise<ExchangeRateData> {
-  try {
-    const endpoint = date 
-      ? `${BACKEND_API_BASE}/exchangerates?date=${date}`
-      : `${BACKEND_API_BASE}/exchangerates`
+  const endpoint = date 
+    ? `${BACKEND_API_BASE}/exchangerates?date=${date}`
+    : `${BACKEND_API_BASE}/exchangerates`
 
+  // Remove the CORS proxy line
+  try {
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -389,14 +408,37 @@ export async function fetchExchangeRates(date?: string): Promise<ExchangeRateDat
       )
     }
 
-    return await response.json()
+    const data = await response.json()
+    
+    if (!data.rates || !Array.isArray(data.rates)) {
+      throw new CNBApiError('Invalid response format from CNB API')
+    }
+
+    const rates: ExchangeRate[] = data.rates.map((rate: any) => ({
+      country: rate.country || 'Unknown',
+      currency: rate.currency || 'Unknown',
+      amount: rate.amount || 1,
+      currencyCode: rate.currencyCode || 'XXX',
+      rate: rate.rate || 0,
+    }))
+
+    return {
+      date: data.date || new Date().toISOString().split('T')[0],
+      rates,
+    }
   } catch (error) {
-    // Error handling...
+    if (error instanceof CNBApiError) {
+      throw error
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new CNBApiError('Network error: Unable to connect to backend API')
+    }
+    
+    throw new CNBApiError('An unexpected error occurred while fetching exchange rates')
   }
 }
 ```
-
-Remove the `generateMockExchangeRates()` function and its usage.
 
 ## Step 11: Production Considerations
 

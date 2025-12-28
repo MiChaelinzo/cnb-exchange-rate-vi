@@ -1,6 +1,6 @@
 # Planning Guide
 
-A professional Czech National Bank (CNB) Exchange Rate Viewer frontend application that displays currency exchange rates. This frontend is designed to integrate with a .NET backend API that fetches data from the CNB public API.
+A professional Czech National Bank (CNB) Exchange Rate Viewer application that displays real-time currency exchange rates fetched directly from the official CNB API.
 
 **Experience Qualities**:
 1. **Professional** - Clean, business-focused design that conveys trust and reliability for financial data
@@ -8,16 +8,16 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer frontend applicati
 3. **Interactive** - Practical currency conversion tools that make exchange rate data immediately useful
 
 **Complexity Level**: Light Application (multiple features with basic state)
-- This is a focused data display and conversion application with API integration, error handling, loading states, data filtering/sorting, and real-time currency conversion. The frontend demonstrates production-ready patterns while using mock data until the .NET backend is implemented.
+- This is a focused data display and conversion application with real CNB API integration, error handling, loading states, data filtering/sorting, and real-time currency conversion. The application fetches live exchange rates using a CORS proxy solution.
 
 ## Essential Features
 
 ### Exchange Rate Data Fetching
-- **Functionality**: Retrieves current exchange rates from CNB public API
+- **Functionality**: Retrieves current exchange rates from CNB public API via CORS proxy
 - **Purpose**: Provides real, live data from official Czech banking sources
 - **Trigger**: Automatic on page load, with manual refresh option
-- **Progression**: User loads page → Loading indicator appears → API call executes → Data parsed and displayed → Success state shown
-- **Success criteria**: Exchange rates display accurately with currency codes, amounts, and rates clearly visible
+- **Progression**: User loads page → Loading indicator appears → API call via CORS proxy executes → Data parsed and displayed → Success state shown
+- **Success criteria**: Live exchange rates display accurately with currency codes, amounts, and rates clearly visible
 
 ### Data Table Display
 - **Functionality**: Shows exchange rates in a sortable, scannable table format
