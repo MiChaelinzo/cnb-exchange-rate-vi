@@ -3,6 +3,7 @@ import { useExchangeRates } from '@/hooks/use-exchange-rates'
 import { ExchangeRateTable } from '@/components/ExchangeRateTable'
 import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleton'
 import { CurrencyConverter } from '@/components/CurrencyConverter'
+import { CurrencyTrendChart } from '@/components/CurrencyTrendChart'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,6 +62,12 @@ function App() {
 {!isLoading && !error && data && (
           <div className="mb-8">
             <CurrencyConverter rates={data.rates} />
+          </div>
+        )}
+
+        {!isLoading && !error && data && (
+          <div className="mb-8">
+            <CurrencyTrendChart rates={data.rates} />
           </div>
         )}
 

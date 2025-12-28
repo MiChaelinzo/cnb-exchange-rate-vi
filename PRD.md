@@ -47,6 +47,13 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Progression**: User inputs amount → Selects from/to currencies → Real-time calculation displayed → Result shown with clear formatting
 - **Success criteria**: Accurate conversions using CNB rates, instant updates on input changes, all currencies available including CZK
 
+### Currency Trend Chart Visualization
+- **Functionality**: Displays historical exchange rate trends over customizable time periods with interactive line chart
+- **Purpose**: Enables users to analyze currency movements and make informed decisions based on historical patterns
+- **Trigger**: User selects currency and time range
+- **Progression**: User selects currency → Chooses time range (7-90 days) → Historical data fetched → Chart rendered with trend analysis → User can view tooltips and trend statistics
+- **Success criteria**: Smooth, responsive chart showing accurate historical rates, clear trend indicators (up/down), percentage change calculation, and informative tooltips with formatted dates
+
 ## Edge Case Handling
 
 - **API Timeout/Network Failure**: Display friendly error message with retry button and troubleshooting hints
@@ -56,6 +63,9 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Stale Data**: Display last update timestamp to inform users of data freshness
 - **Invalid Conversion Input**: Handle non-numeric or negative amounts gracefully without errors
 - **Same Currency Conversion**: Allow but show 1:1 conversion correctly
+- **Historical Data Unavailable**: Show appropriate empty state when chart data cannot be fetched
+- **Weekend/Holiday Gaps**: Chart automatically excludes non-trading days to show accurate trend lines
+- **Long-term Data Loading**: Progressive loading state for chart when fetching multiple days of data
 
 ## Design Direction
 
@@ -106,14 +116,20 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Input component for currency converter amount entry
   - Select component for currency selection dropdowns
   - Label component for form field labels
+  - Recharts LineChart for historical trend visualization
+  - Tooltip component for chart data point details
+  - Legend component for chart data series identification
 - **Customizations**: 
   - Custom table styling with alternating row backgrounds for easier scanning
   - Monospace font override for numeric columns
   - Custom loading spinner with CNB-style branding colors
+  - Chart styled with theme colors for consistency
+  - Custom trend indicators with color-coded positive/negative changes
 - **States**: 
   - Buttons: default with solid primary, hover with slight brightness increase, active with scale press, disabled with reduced opacity
   - Table rows: hover with subtle background tint, selected with accent border
   - Loading: skeleton placeholders that match final content layout
+  - Chart: interactive hover states on data points, smooth transitions on data updates
 - **Icon Selection**: 
   - ArrowsClockwise for refresh action
   - Warning for error states  
@@ -121,11 +137,13 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - CaretUp/CaretDown for sortable columns
   - ArrowsLeftRight for currency swap functionality
   - Equals for conversion result indicator
+  - TrendUp/TrendDown for chart trend indicators
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
   - Table cell padding: px-4 py-3
   - Button padding: px-4 py-2
+  - Chart margins: balanced to ensure labels are visible
 - **Mobile**: 
   - Stack header elements vertically
   - Make table horizontally scrollable with sticky first column
@@ -135,3 +153,5 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Stack converter input fields vertically
   - Show currency swap button below fields on mobile
   - Ensure dropdowns are touch-friendly with large hit areas
+  - Chart remains responsive with adjusted margins for smaller screens
+  - Stack chart controls (currency selector, time range) vertically on mobile
