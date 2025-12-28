@@ -2,97 +2,64 @@ import { useState } from 'react'
 import { useExchangeRates } from '@/hooks/use-exchange-rates'
 import { useComparisonRates } from '@/hooks/use-comparison-rates'
 import { useFavorites } from '@/hooks/use-favorites'
-import { useAutoUpdatePredictionHistory } from '@/hooks/use-auto-update-prediction-history'
-import { usePredictionHistory } from '@/hooks/use-prediction-history'
-import { ExchangeRateTable } from '@/components/ExchangeRateTable'
-import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleton'
 import { CurrencyConverter } from '@/components/CurrencyConverter'
-import { CurrencyTrendChart } from '@/components/CurrencyTrendChart'
 import { ComparisonDateSelector } from '@/components/ComparisonDateSelector'
-import { ComparisonTemplates } from '@/components/ComparisonTemplates'
-import { CustomTemplateBuilder } from '@/components/CustomTemplateBuilder'
-import { RateComparisonTable } from '@/components/RateComparisonTable'
-import { ComparisonReportExport } from '@/components/ComparisonReportExport'
-import { ExportMenu } from '@/components/ExportMenu'
+import { CustomTemplateBuilder } from '@/components/CustomTemplate
+import { ComparisonReportExport } from '@/components/ComparisonRepor
 import { QuickStats } from '@/components/QuickStats'
-import { MultiCurrencyConverter } from '@/components/MultiCurrencyConverter'
 import { RateAlerts } from '@/components/RateAlerts'
-import { AiInsights } from '@/components/AiInsights'
-import { AiChatAssistant } from '@/components/AiChatAssistant'
-import { AiReportGenerator } from '@/components/AiReportGenerator'
-import { AiCurrencyPredictions } from '@/components/AiCurrencyPredictions'
-import { PredictionHistoryViewer } from '@/components/PredictionHistoryViewer'
+import { ExportMenu } from '@/components/ExportMenu'
+import { AiCurrencyPredictions } from '@/components/
 import { AccuracyTrendAnalytics } from '@/components/AccuracyTrendAnalytics'
-import { ReportPreview } from '@/components/ReportPreview'
-import { CurrencyHeatmap } from '@/components/CurrencyHeatmap'
-import { NotificationCenter } from '@/components/NotificationCenter'
-import { AutoRefreshScheduler } from '@/components/AutoRefreshScheduler'
-import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
-import { CollaborationDashboard } from '@/components/CollaborationDashboard'
-import { FilterPresetManager } from '@/components/FilterPresetManager'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle, ClockCounterClockwise, Keyboard, Users, FolderOpen } from '@phosphor-icons/react'
-import { formatDate } from '@/lib/utils'
+import { CurrencyHeatmap } from '@/components/Curren
+import { AiInsights } from '@/components/AiInsights'
+import { CollaborationDashboard } from '@/components/Collabora
+import { AiReportGenerator } from '@/components/AiReportGenerator'
+import { Card, CardContent, CardDescription, Ca
+import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, Ch
 import { Toaster } from '@/components/ui/sonner'
+
+
+import { formatDate } from '@/lib/utils'
+  const [showFavoritesOnly, setShowFavoritesOnly
 import { toast } from 'sonner'
 
-type ViewMode = 'current' | 'comparison' | 'analytics' | 'ai' | 'history' | 'collaborate' | 'presets'
+  const { favorites, clearFavorites } = useFavorites()
 
 function App() {
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
-  const [viewMode, setViewMode] = useState<ViewMode>('current')
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const [sharedWatchlistCurrencies, setSharedWatchlistCurrencies] = useState<string[]>([])
-  const [selectedSharedWatchlist, setSelectedSharedWatchlist] = useState<any>(null)
-  const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null)
-  const { data, isLoading, error, refetch } = useExchangeRates(selectedDate)
-  const comparison = useComparisonRates()
-  const { favorites, clearFavorites } = useFavorites()
-  const { history: predictionHistory } = usePredictionHistory()
-
-  useAutoUpdatePredictionHistory(data?.rates)
+    if (viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') 
+        loading: 'Fetching exchange rates...',
+        error: 'Failed to fetch exchange rates',
+    } else if (viewMode === 'comparison') {
+        loading: 'Refreshing comparison d
+        error: 'Failed to refresh comparison data',
 
   const handleRefresh = async () => {
-    if (viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') {
-      toast.promise(refetch(), {
-        loading: 'Fetching exchange rates...',
-        success: 'Exchange rates updated successfully',
-        error: 'Failed to fetch exchange rates',
-      })
-    } else if (viewMode === 'comparison') {
-      toast.promise(comparison.refetchAll(), {
-        loading: 'Refreshing comparison data...',
-        success: 'Comparison data updated successfully',
-        error: 'Failed to refresh comparison data',
-      })
-    }
-  }
-
-  const handleAddComparisonDate = async (date: string) => {
     toast.promise(comparison.addDate(date), {
-      loading: 'Fetching data for selected date...',
-      success: 'Date added to comparison',
-      error: (err) => err || 'Failed to add date',
+      toast.promise(refetch(), {
     })
+        success: 'Exchange rates updated successfully',
+    comparison.clear()
+      })
+    toast.pr
+      success: `Template applied successfully!
+    })
+
+    <div className="min-h-screen bg-gradient-to-br 
+      })
+     
   }
 
-  const handleApplyTemplate = async (dates: string[]) => {
-    comparison.clear()
-    
-    const promises = dates.map(date => comparison.addDate(date))
-    
-    toast.promise(Promise.all(promises), {
-      loading: `Loading template with ${dates.length} dates...`,
-      success: `Template applied successfully! ${dates.length} dates loaded.`,
-      error: 'Failed to apply template. Some dates may not have loaded.',
-    })
-  }
+              <div>
+                  CNB Exchange Rates
+                <p className="text-muted-foreground 
+                </p>
+            </div>
+      
+   
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
+                <ExportMenu data={data} variant="outline" size="lg" />
       <Toaster position="top-right" />
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -113,35 +80,27 @@ function App() {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              <KeyboardShortcuts
-                onRefresh={handleRefresh}
-                onToggleFavorites={() => setShowFavoritesOnly(prev => !prev)}
-                onFocusSearch={() => searchInputRef?.focus()}
-                onSwitchTab={(tab) => setViewMode(tab as ViewMode)}
-              />
-              {(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && !isLoading && !error && data && (
+              {(viewMode === 'current' || viewMode === 'analytics') && !isLoading && !error && data && (
                 <ExportMenu data={data} variant="outline" size="lg" />
-              )}
-              {viewMode !== 'history' && (
-                <Button
-                  onClick={handleRefresh}
-                  disabled={(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <ArrowsClockwise 
-                    size={18} 
-                    weight="bold"
-                    className={((viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
-                  />
-                  Refresh
-                </Button>
-              )}
+              <T
+              <Button
+                onClick={handleRefresh}
+                disabled={(viewMode === 'current' || viewMode === 'analytics') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
+                size="lg"
+                className="gap-2"
+              >
+                <ArrowsClockwise 
+                  size={18} 
+                  weight="bold"
+                  className={((viewMode === 'current' || viewMode === 'analytics') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
+                />
+                Refresh
+              </Button>
             </div>
           </div>
 
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
-            <TabsList className="grid w-full max-w-6xl grid-cols-7 h-12">
+            <TabsList className="grid w-full max-w-2xl grid-cols-3 h-12">
               <TabsTrigger value="current" className="gap-2 text-base">
                 <ChartLine size={20} weight="duotone" />
                 Current Rates
@@ -153,22 +112,6 @@ function App() {
               <TabsTrigger value="analytics" className="gap-2 text-base">
                 <ChartPieSlice size={20} weight="duotone" />
                 Analytics
-              </TabsTrigger>
-              <TabsTrigger value="ai" className="gap-2 text-base">
-                <Sparkle size={20} weight="duotone" />
-                AI Insights
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2 text-base">
-                <ClockCounterClockwise size={20} weight="duotone" />
-                History
-              </TabsTrigger>
-              <TabsTrigger value="collaborate" className="gap-2 text-base">
-                <Users size={20} weight="duotone" />
-                Collaborate
-              </TabsTrigger>
-              <TabsTrigger value="presets" className="gap-2 text-base">
-                <FolderOpen size={20} weight="duotone" />
-                Presets
               </TabsTrigger>
             </TabsList>
 
@@ -185,7 +128,7 @@ function App() {
                 <CurrencyTrendChart rates={data.rates} />
               )}
 
-              <Card className="shadow-lg">
+                      )}
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
@@ -193,19 +136,19 @@ function App() {
                       {data && (
                         <CardDescription className="text-base mt-1">
                           Valid for: <span className="font-semibold text-foreground">{formatDate(data.date)}</span>
-                        </CardDescription>
+                  <ComparisonReportExport 
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       {data && (
                         <div className="text-sm text-muted-foreground">
-                          {showFavoritesOnly 
+
                             ? `${(favorites || []).length} favorite${(favorites || []).length !== 1 ? 's' : ''}`
                             : `${data.rates.length} currencies`
                           }
                         </div>
                       )}
-                      {(favorites || []).length > 0 && (
+                error={comparison.error}
                         <Button
                           variant={showFavoritesOnly ? "default" : "outline"}
                           size="sm"
@@ -219,9 +162,9 @@ function App() {
                       {data && (
                         <ExportMenu data={data} variant="ghost" size="sm" />
                       )}
-                    </div>
+              )}
                   </div>
-                </CardHeader>
+                  <ExchangeRa
                 <CardContent>
                   {error && (
                     <Alert variant="destructive" className="mb-6">
@@ -229,7 +172,7 @@ function App() {
                       <AlertTitle>Error Loading Exchange Rates</AlertTitle>
                       <AlertDescription className="mt-2">
                         {error}
-                        <Button
+                      Try Again
                           variant="outline"
                           size="sm"
                           onClick={handleRefresh}
@@ -239,11 +182,11 @@ function App() {
                         </Button>
                       </AlertDescription>
                     </Alert>
-                  )}
+
 
                   {isLoading && <ExchangeRateTableSkeleton />}
 
-                  {!isLoading && !error && data && (
+                <Alert variant="destructive">
                     <>
                       {showFavoritesOnly && (favorites || []).length === 0 ? (
                         <div className="text-center py-12">
@@ -257,216 +200,89 @@ function App() {
                           </Button>
                         </div>
                       ) : (
-                        <ExchangeRateTable rates={data.rates} showFavoritesOnly={showFavoritesOnly} />
+                </>
                       )}
-                    </>
+              )}
                   )}
-                </CardContent>
+              <CollaborationDa
               </Card>
-            </TabsContent>
+              
 
             <TabsContent value="comparison" className="space-y-8 mt-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold">Multi-Period Comparison</h2>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Compare exchange rates across different time periods
-                  </p>
-                </div>
-                {comparison.comparisons.length > 0 && (
-                  <ComparisonReportExport 
-                    comparisons={comparison.comparisons}
-                    variant="default"
-                    size="lg"
-                  />
-                )}
-              </div>
-
-              <ComparisonTemplates 
-                onApplyTemplate={handleApplyTemplate}
-                isLoading={comparison.isLoading}
-              />
-
-              <CustomTemplateBuilder
-                onApplyTemplate={handleApplyTemplate}
-                isLoading={comparison.isLoading}
-              />
-
               <ComparisonDateSelector
                 selectedDates={comparison.comparisons.map(c => c.date)}
                 onAddDate={handleAddComparisonDate}
-                onRemoveDate={comparison.removeDate}
+                  </CardHeader>
                 onClear={comparison.clear}
-                isLoading={comparison.isLoading}
+                      showFavoritesOnly={false}
                 error={comparison.error}
-              />
+              )}
 
               <RateComparisonTable
                 comparisons={comparison.comparisons}
-                onRemoveDate={comparison.removeDate}
+                }}
               />
-            </TabsContent>
+        </div>
 
             <TabsContent value="analytics" className="space-y-8 mt-8">
               {!isLoading && !error && data && (
-                <>
+              rel=
                   <QuickStats rates={data.rates} />
-                  
-                  <CurrencyHeatmap rates={data.rates} />
-                  
+            </a>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <MultiCurrencyConverter rates={data.rates} />
                     <RateAlerts rates={data.rates} />
-                  </div>
+  )
 
                   <CurrencyTrendChart rates={data.rates} />
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <AutoRefreshScheduler onRefresh={refetch} />
-                    <NotificationCenter />
-                  </div>
                 </>
-              )}
+
 
               {isLoading && (
                 <div className="space-y-6">
                   <ExchangeRateTableSkeleton />
                 </div>
-              )}
 
-              {error && (
+
+
                 <Alert variant="destructive">
                   <Warning size={20} weight="fill" />
                   <AlertTitle>Error Loading Data</AlertTitle>
                   <AlertDescription className="mt-2">
                     {error}
-                    <Button
+
                       variant="outline"
-                      size="sm"
+
                       onClick={handleRefresh}
                       className="mt-3"
                     >
                       Try Again
                     </Button>
-                  </AlertDescription>
+
                 </Alert>
-              )}
+
             </TabsContent>
 
-            <TabsContent value="ai" className="space-y-8 mt-8">
-              {!isLoading && !error && data && (
-                <>
-                  <AiInsights rates={data.rates} date={data.date} />
-                  
-                  <AiCurrencyPredictions rates={data.rates} date={data.date} />
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <AiChatAssistant rates={data.rates} date={data.date} />
-                    <AiReportGenerator rates={data.rates} date={data.date} />
-                  </div>
-                </>
-              )}
-
-              {isLoading && (
-                <div className="space-y-6">
-                  <ExchangeRateTableSkeleton />
-                </div>
-              )}
-
-              {error && (
-                <Alert variant="destructive">
-                  <Warning size={20} weight="fill" />
-                  <AlertTitle>Error Loading Data</AlertTitle>
-                  <AlertDescription className="mt-2">
-                    {error}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRefresh}
-                      className="mt-3"
-                    >
-                      Try Again
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </TabsContent>
-
-            <TabsContent value="history" className="space-y-8 mt-8">
-              {data && (
-                <>
-                  <ReportPreview history={predictionHistory} />
-                  
-                  <AccuracyTrendAnalytics history={predictionHistory} />
-                  
-                  <PredictionHistoryViewer 
-                    currencies={data.rates.map(r => r.currencyCode).filter((v, i, a) => a.indexOf(v) === i)}
-                  />
-                </>
-              )}
-              {!data && isLoading && (
-                <ExchangeRateTableSkeleton />
-              )}
-            </TabsContent>
-
-            <TabsContent value="collaborate" className="space-y-8 mt-8">
-              <CollaborationDashboard onWatchlistSelect={(currencies, watchlist) => {
-                setSharedWatchlistCurrencies(currencies)
-                setSelectedSharedWatchlist(watchlist)
-              }} />
-              
-              {sharedWatchlistCurrencies.length > 0 && data && (
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-2xl">Shared Watchlist Currencies</CardTitle>
-                        <CardDescription>
-                          {selectedSharedWatchlist ? `Viewing "${selectedSharedWatchlist.name}"` : 'Viewing currencies from selected shared watchlist'}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ExchangeRateTable 
-                      rates={data.rates.filter(r => sharedWatchlistCurrencies.includes(r.currencyCode))} 
-                      showFavoritesOnly={false}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="presets" className="space-y-8 mt-8">
-              <FilterPresetManager
-                currentFilters={{}}
-                onApplyPreset={(filters) => {
-                  toast.info('Navigate to the appropriate tab to apply this preset')
-                }}
-              />
-            </TabsContent>
-          </Tabs>
         </div>
 
         <footer className="mt-8 text-center text-sm text-muted-foreground">
-          <p>
+
             Data provided by the{' '}
-            <a
+
               href="https://www.cnb.cz"
-              target="_blank"
+
               rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
+
             >
-              Czech National Bank
+
             </a>
-          </p>
+
           <p className="mt-1">
             Exchange rates are updated daily by CNB
           </p>
-        </footer>
-      </div>
-    </div>
-  )
-}
 
-export default App
+      </div>
+
+  )
+
+
