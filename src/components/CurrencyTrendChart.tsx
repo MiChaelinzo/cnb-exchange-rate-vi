@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ExchangeRate } from '@/lib/types'
 import { useHistoricalRates } from '@/hooks/use-historical-rates'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,9 +19,23 @@ interface CurrencyTrendChartProps {
 }
 
 export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
+  const defaultCurrency = useMemo(() => {
+    const priorityCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF']
+    const availablePriority = priorityCurrencies.find(code => 
+      rates.some(rate => rate.currencyCode === code)
+    )
+    return availablePriority || (rates.length > 0 ? rates[0].currencyCode : 'USD')
+  }, [rates])
+
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(defaultCurrency)
   const [timeRange, setTimeRange] = useState<number>(7)
   const [chartType, setChartType] = useState<ChartType>('line')
+
+  useEffect(() => {
+    if (!rates.some(rate => rate.currencyCode === selectedCurrency)) {
+      setSelectedCurrency(defaultCurrency)
+    }
+  }, [rates, selectedCurrency, defaultCurrency])
 
   const { data: historicalData, isLoading, error, refetch } = useHistoricalRates(selectedCurrency, timeRange)
 
@@ -309,23 +323,65 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
             <AlertDescription className="ml-2">
               <div className="space-y-2">
                 <p className="font-medium">{error}</p>
-                <p className="text-sm">
-                  This might happen if:
-                </p>
-                <ul className="text-sm list-disc list-inside ml-2 space-y-1">
-                  <li>The currency is not available in CNB historical records</li>
-                  <li>Network connectivity issues</li>
-                  <li>CNB API is temporarily unavailable</li>
-                </ul>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refetch()}
-                  className="mt-2 gap-2"
-                >
-                  <ArrowsClockwise size={14} weight="bold" />
-                  Try Again
-                </Button>
+                {!rates.some(r => r.currencyCode === selectedCurrency) ? (
+                  <>
+                    <p className="text-sm">
+                      The currency <strong>{selectedCurrency}</strong> is not available in the current exchange rate data.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const availableCurrency = rates.find(r => 
+                          ['USD', 'EUR', 'GBP', 'JPY'].includes(r.currencyCode)
+                        ) || rates[0]
+                        if (availableCurrency) {
+                          setSelectedCurrency(availableCurrency.currencyCode)
+                        }
+                      }}
+                      className="mt-2 gap-2"
+                    >
+                      Select Available Currency
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm">
+                      This might happen if:
+                    </p>
+                    <ul className="text-sm list-disc list-inside ml-2 space-y-1">
+                      <li>The currency is not available in CNB historical records</li>
+                      <li>Network connectivity issues</li>
+                      <li>CNB API is temporarily unavailable</li>
+                    </ul>
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refetch()}
+                        className="gap-2"
+                      >
+                        <ArrowsClockwise size={14} weight="bold" />
+                        Try Again
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const commonCurrencies = ['EUR', 'GBP', 'JPY', 'AUD', 'CAD']
+                          const availableCurrency = sortedRates.find(r => 
+                            commonCurrencies.includes(r.currencyCode) && r.currencyCode !== selectedCurrency
+                          )
+                          if (availableCurrency) {
+                            setSelectedCurrency(availableCurrency.currencyCode)
+                          }
+                        }}
+                      >
+                        Try Different Currency
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </AlertDescription>
           </Alert>

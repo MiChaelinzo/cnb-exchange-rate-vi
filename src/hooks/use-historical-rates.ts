@@ -15,7 +15,8 @@ interface UseHistoricalRatesResult {
 
 export function useHistoricalRates(
   currencyCode: string | null,
-  days: number = 30
+  days: number = 30,
+  validateCurrency?: boolean
 ): UseHistoricalRatesResult {
   const [data, setData] = useState<HistoricalDataPoint[]>([])
   const [isLoading, setIsLoading] = useState(false)

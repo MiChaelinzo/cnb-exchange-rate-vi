@@ -91,6 +91,8 @@ export async function fetchHistoricalRates(
 
   const historicalData: Array<{ date: string; rate: number }> = []
   let failedAttempts = 0
+  let currencyNotFoundCount = 0
+  let networkErrorCount = 0
   const maxFailures = Math.floor(dates.length * 0.3)
   
   for (let i = 0; i < dates.length; i++) {
@@ -104,6 +106,7 @@ export async function fetchHistoricalRates(
           rate: rate.rate / rate.amount,
         })
       } else {
+        currencyNotFoundCount++
         failedAttempts++
       }
       
@@ -111,6 +114,7 @@ export async function fetchHistoricalRates(
         await delay(100)
       }
     } catch (error) {
+      networkErrorCount++
       failedAttempts++
       console.warn(`Failed to fetch data for ${dates[i]}:`, error)
       
@@ -123,8 +127,24 @@ export async function fetchHistoricalRates(
   }
 
   if (historicalData.length === 0) {
-    throw new CNBApiError(
-      `No historical data found for ${currencyCode}. The currency may not be available in CNB records.`
+    if (currencyNotFoundCount > 0 && networkErrorCount === 0) {
+      throw new CNBApiError(
+        `Currency ${currencyCode} not found in CNB historical records. This currency may not be tracked by the Czech National Bank.`
+      )
+    } else if (networkErrorCount > 0) {
+      throw new CNBApiError(
+        `Unable to fetch historical data due to network issues. ${historicalData.length} of ${dates.length} requests succeeded.`
+      )
+    } else {
+      throw new CNBApiError(
+        `No historical data found for ${currencyCode}. The currency may not be available in CNB records.`
+      )
+    }
+  }
+
+  if (historicalData.length < Math.floor(dates.length * 0.5)) {
+    console.warn(
+      `Only ${historicalData.length} of ${dates.length} data points retrieved for ${currencyCode}. Some dates may be missing.`
     )
   }
 
