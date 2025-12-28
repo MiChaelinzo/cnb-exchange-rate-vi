@@ -7,8 +7,8 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 2. **Efficient** - Fast loading with clear feedback states and minimal distractions from the core data
 3. **Interactive** - Practical currency conversion tools that make exchange rate data immediately useful
 
-**Complexity Level**: Light Application (multiple features with basic state)
-- This is a focused data display and conversion application with real CNB API integration, error handling, loading states, data filtering/sorting, and real-time currency conversion. The application fetches live exchange rates using a CORS proxy solution.
+**Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
+- This application has evolved into a sophisticated financial data platform with multiple specialized views (Current Rates, Comparison Mode, Analytics), real-time data processing, persistent user preferences (favorites, alerts), advanced filtering and search, interactive visualizations, multi-format exports, and intelligent alert systems. It demonstrates complex state management, batch API processing, and provides professional-grade analysis tools.
 
 ## Essential Features
 
@@ -75,6 +75,34 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Progression**: User views exchange rate table → Clicks star icon on desired currency → Currency added to favorites (star fills with yellow color) → User clicks "Watchlist" button to filter view → Only favorited currencies display → User can toggle back to "Show All" → Favorites persist across sessions
 - **Success criteria**: Star icons visible and interactive on every currency row; instant visual feedback (filled star = favorited, outline = not favorited); watchlist button appears only when favorites exist; watchlist filter shows only favorited currencies; empty state with helpful message when watchlist is empty; favorites persist using useKV storage; yellow star color for visibility; smooth transitions between all/watchlist views
 
+### Advanced Search and Filter
+- **Functionality**: Real-time search functionality that filters currencies by country name, currency name, or currency code
+- **Purpose**: Enables users to quickly find specific currencies without scrolling through the entire list
+- **Trigger**: User types in the search input field above the exchange rate table
+- **Progression**: User focuses search field → Types query → Table instantly filters to matching currencies → Count of results displayed → User can clear search with X button → Full list restored
+- **Success criteria**: Instant filtering without delays; search works across country, currency name, and code; case-insensitive matching; clear visual feedback showing result count; empty state when no matches found; smooth animations
+
+### Quick Stats Dashboard
+- **Functionality**: Displays key metrics and insights from current exchange rates in easy-to-scan cards
+- **Purpose**: Provides immediate high-level understanding of the currency landscape without detailed analysis
+- **Trigger**: Automatically displayed when exchange rate data loads in Current Rates and Analytics tabs
+- **Progression**: Data loads → Stats calculated → Four cards display: Total Currencies, Average Rate, Strongest vs CZK, Weakest vs CZK → Color-coded with icons
+- **Success criteria**: Stats accurate and update with data refresh; visually distinct cards with icons; hover effects for engagement; responsive grid layout; clear labels and units
+
+### Multi-Currency Converter
+- **Functionality**: Converts a single CZK amount into multiple currencies simultaneously, showing results in organized sections for popular and all other currencies
+- **Purpose**: Allows users to quickly see equivalent values across many currencies at once, ideal for planning or comparison
+- **Trigger**: User enters amount in CZK input field within the multi-currency converter card
+- **Progression**: User navigates to Analytics tab → Enters amount in CZK → Conversion results immediately display for all currencies → Popular currencies shown in grid → Other currencies in scrollable list → Real-time updates as amount changes
+- **Success criteria**: Instant calculations without lag; clearly separated popular vs all currencies sections; scrollable list for non-popular currencies; formatted results with currency names and codes; empty state when no amount entered; responsive layout adapts to screen size
+
+### Rate Alerts System
+- **Functionality**: Users can create custom rate alerts that notify them when a currency reaches a target rate (above or below threshold)
+- **Purpose**: Enables proactive monitoring of currencies without constant manual checking, helping users catch optimal exchange opportunities
+- **Trigger**: User creates alert by selecting currency, condition (above/below), and target rate
+- **Progression**: User navigates to Analytics tab → Fills alert form (currency, condition, rate) → Clicks Create Alert → Alert saved to persistent storage → On data refresh, alerts checked → If triggered, toast notification appears → Alert marked as triggered with green badge → User can delete alerts anytime
+- **Success criteria**: Alerts persist across sessions using useKV; triggered alerts show toast notifications; visual distinction between active and triggered alerts; current rate displayed for comparison; form validation prevents invalid inputs; clean UI for managing multiple alerts; info message explains checking mechanism
+
 ## Edge Case Handling
 
 - **API Timeout/Network Failure**: Display friendly error message with retry button, automatic proxy fallback, and troubleshooting hints
@@ -103,9 +131,20 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Comparison Mode - Single Date**: Show only rate values without percentage changes when comparing single date
 - **Comparison Mode - API Failures**: Handle individual date fetch failures gracefully without breaking entire comparison
 - **Comparison Mode - Tab Switching**: Preserve both current rates and comparison data when switching between tabs
-- **Favorites Empty State**: Show helpful message when watchlist filter is active but no favorites exist
 - **Favorites Persistence**: Ensure favorites survive page refreshes and session changes using KV storage
 - **Star Icon Interaction**: Provide immediate visual feedback when toggling favorites without page reload
+- **Search No Results**: Display helpful empty state when search query returns no matches
+- **Search Special Characters**: Handle special characters and accents in search queries gracefully
+- **Multi-Currency Converter Zero Amount**: Show helpful prompt when amount is zero or empty
+- **Multi-Currency Converter Invalid Input**: Only accept valid numeric inputs with decimal support
+- **Quick Stats Missing Data**: Handle edge cases when rates array is empty
+- **Rate Alerts Duplicate Currency**: Allow multiple alerts for same currency with different targets
+- **Rate Alerts Invalid Rate**: Validate target rate is positive number before creating alert
+- **Rate Alerts Missing Currency**: Prevent alert creation without currency selection
+- **Rate Alerts Notification Spam**: Only notify once per alert trigger, track checked alerts
+- **Rate Alerts Persistence**: Store alerts in KV storage to survive page refreshes
+- **Analytics Tab Loading**: Show appropriate loading states when switching to analytics tab
+- **Three-Tab Navigation**: Ensure smooth transitions between Current Rates, Comparison, and Analytics tabs
 
 ## Design Direction
 
@@ -153,16 +192,17 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Badge component for currency codes and selected date chips
   - Alert component for error messages
   - Skeleton component for loading states
-  - Input component for currency converter amount entry and filtering
+  - Input component for currency converter amount entry, filtering, and search fields
   - Select component for currency selection dropdowns and chart type selector
   - Label component for form field labels
   - Recharts LineChart, BarChart, and AreaChart for historical trend visualization
   - Tooltip component for chart data point details
   - Legend component for chart data series identification
   - DropdownMenu component for export format selection
-  - Tabs component for switching between current rates and comparison mode
+  - Tabs component for switching between Current Rates, Comparison, and Analytics views
   - Calendar component for date selection in comparison mode
   - Popover component for calendar picker presentation
+  - ScrollArea component for scrollable lists in multi-currency converter
 - **Customizations**: 
   - Custom table styling with alternating row backgrounds for easier scanning
   - Monospace font override for numeric columns
@@ -181,12 +221,13 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Warning for error states  
   - Bank for CNB branding
   - CaretUp/CaretDown for sortable columns
-  - ArrowsLeftRight for currency swap functionality
+  - ArrowsLeftRight for currency swap functionality and multi-converter
   - Equals for conversion result indicator and neutral change
   - TrendUp/TrendDown for chart trend indicators and comparison changes
   - ChartLine for line chart selector and current rates tab
   - ChartBar for bar chart selector
   - ChartLineUp for area chart selector
+  - ChartPieSlice for analytics tab
   - DownloadSimple for export functionality
   - FileCsv for CSV format option
   - FileJs for JSON format option
@@ -194,11 +235,15 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - CalendarCheck for comparison mode tab
   - CalendarBlank for date selector
   - CalendarPlus for empty comparison state
-  - Plus for add date button
-  - X for remove date badges
-  - Trash for clear all comparison dates
+  - Plus for add date button and create alert
+  - X for remove date badges and clear search
+  - Trash for clear all comparison dates and delete alerts
   - Info for informational alerts
   - Star (outline/filled) for favorites/watchlist feature with yellow color for filled state
+  - MagnifyingGlass for search functionality
+  - Globe for total currencies stat
+  - Bell for rate alerts feature
+  - CheckCircle for triggered alerts
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -221,6 +266,11 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Comparison mode date badges wrap properly in small containers
   - Quick-add buttons stack vertically on very small screens
   - Comparison table remains horizontally scrollable with fixed currency column
-  - Tab navigation switches to full-width buttons on mobile
+  - Tab navigation switches to full-width buttons with proper text sizing on mobile
   - Watchlist button and favorite stars remain accessible with proper touch targets
   - Star icons in table maintain 44px minimum touch area on mobile
+  - Quick stats grid stacks to single column on mobile
+  - Multi-currency converter grid becomes single column on small screens
+  - Analytics tab components stack vertically on mobile for optimal viewing
+  - Search input full width on mobile with proper spacing
+  - Alert creation form fields stack vertically on small screens
