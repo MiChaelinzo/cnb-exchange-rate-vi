@@ -8,14 +8,16 @@ This application fetches live exchange rate data from the official Czech Nationa
 
 ## Features
 
-✅ **Live CNB Data** - Fetches real exchange rates from the official CNB API via CORS proxy  
+✅ **Live CNB Data** - Fetches real exchange rates from the official CNB API with fallback proxy support  
 ✅ **Currency Converter** - Real-time currency conversion calculator using live exchange rates  
+✅ **Historical Charts** - Interactive trend analysis with multiple chart types (line, bar, area, change)  
 ✅ **Sortable Table** - Click column headers to sort by country, currency, code, or rate  
-✅ **Error Handling** - Comprehensive error states with retry mechanisms  
+✅ **Error Handling** - Comprehensive error states with retry mechanisms and fallback strategies  
 ✅ **Loading States** - Skeleton loaders for better user experience  
 ✅ **Responsive Design** - Mobile-friendly interface that adapts to all screen sizes  
 ✅ **Professional UI** - Clean, financial-grade design with proper typography  
 ✅ **Type Safety** - Full TypeScript implementation with proper types  
+✅ **Batch Processing** - Optimized historical data fetching with parallel batch requests  
 
 ## Tech Stack
 
@@ -34,9 +36,11 @@ src/
 │   ├── ExchangeRateTable.tsx       # Main table component with sorting
 │   ├── ExchangeRateTableSkeleton.tsx # Loading skeleton
 │   ├── CurrencyConverter.tsx       # Currency conversion calculator
+│   ├── CurrencyTrendChart.tsx      # Historical trend visualization
 │   └── ui/                          # shadcn components
 ├── hooks/
-│   └── use-exchange-rates.ts        # Custom hook for API data fetching
+│   ├── use-exchange-rates.ts        # Custom hook for API data fetching
+│   └── use-historical-rates.ts      # Custom hook for historical data
 ├── lib/
 │   ├── api.ts                       # API service layer with CNB integration
 │   ├── types.ts                     # TypeScript interfaces
@@ -46,22 +50,40 @@ src/
 
 ## How It Works
 
-### CORS Proxy Solution
+### Multi-Proxy Fallback System
 
-The CNB API doesn't allow direct browser requests due to CORS restrictions. This application solves this by using a public CORS proxy service (corsproxy.io) that acts as an intermediary:
+The CNB API doesn't allow direct browser requests due to CORS restrictions. This application uses an intelligent multi-proxy system with automatic fallback:
 
-1. Browser requests data through the CORS proxy
+**Primary Proxies**:
+1. `https://corsproxy.io/` - Fast, reliable CORS proxy
+2. `https://api.allorigins.win/raw?url=` - Backup proxy service
+
+**How It Works**:
+1. Browser requests data through the active CORS proxy
 2. Proxy forwards the request to CNB API
 3. CNB API responds with exchange rate data
 4. Proxy adds proper CORS headers and forwards response to browser
+5. If a proxy fails, automatically switches to the next available proxy
+
+**Retry Logic**:
+- Each request attempts up to 2 retries per proxy
+- 10-second timeout on each request
+- Exponential backoff between retries (500ms, 1000ms)
+- Automatically remembers the working proxy for subsequent requests
 
 The implementation is in `src/lib/api.ts`:
 ```typescript
-const CNB_API_BASE = 'https://api.cnb.cz/cnbapi'
-const CORS_PROXY = 'https://corsproxy.io/?'
+const CORS_PROXIES = [
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+]
 
-const endpoint = `${CNB_API_BASE}/exrates/daily?lang=EN`
-const proxiedEndpoint = `${CORS_PROXY}${encodeURIComponent(endpoint)}`
+async function fetchWithRetry(endpoint: string, maxRetries: number = 2) {
+  // Tries each proxy with retries until successful
+  for (let proxyAttempt = 0; proxyAttempt < CORS_PROXIES.length; proxyAttempt++) {
+    // ... retry logic with timeout and exponential backoff
+  }
+}
 ```
 
 ### CNB API Endpoints
@@ -119,6 +141,23 @@ The converter component provides:
 - Clear visual feedback of conversion results
 - Cross-currency conversion via CZK base rate
 
+### Historical Trend Charts
+The chart component provides:
+- Interactive visualization of currency trends over time
+- Multiple chart types: Line, Bar, Area, and Daily Change
+- Customizable time ranges: 7, 14, 30, 60, or 90 days
+- Detailed trend analysis with statistics:
+  - Overall trend percentage and direction
+  - Maximum daily increase and decrease
+  - Average daily change and volatility
+  - Count of positive, negative, and stable days
+- Optimized batch fetching of historical data
+- Parallel processing of multiple date requests
+- Automatic exclusion of weekends (non-trading days)
+- Rich tooltips showing rate changes between days
+- Color-coded trend indicators (green for up, red for down)
+- Responsive design that adapts to mobile screens
+
 ## Build & Run Instructions
 
 ### Prerequisites
@@ -151,14 +190,20 @@ npm run preview
 4. **Generous Spacing**: Improves readability of numerical data
 5. **Subtle Animations**: Measured transitions that feel professional
 6. **High Contrast**: WCAG AA compliant color combinations
-7. **CORS Proxy**: Enables direct browser access to CNB API without backend
+7. **Multi-Proxy Fallback**: Intelligent proxy switching for maximum reliability
+8. **Batch Processing**: Parallel historical data fetching for better performance
+9. **Smart Caching**: Remembers working proxy to reduce latency
+10. **Comprehensive Analytics**: Rich trend analysis with multiple visualization types
 
 ## Notes & Assumptions
 
-1. **CORS Proxy**: Uses corsproxy.io public service for CORS bypass
-2. **Date Format**: Exchange rates are updated daily by CNB
-3. **Currency Codes**: Uses ISO 4217 currency codes from API response
-4. **Browser Support**: Targets modern browsers with ES2020+ support
+1. **Multi-Proxy System**: Uses multiple CORS proxy services with automatic fallback
+2. **Batch Processing**: Fetches historical data in parallel batches of 3 for optimal performance
+3. **Date Format**: Exchange rates are updated daily by CNB (excludes weekends)
+4. **Currency Codes**: Uses ISO 4217 currency codes from API response
+5. **Browser Support**: Targets modern browsers with ES2020+ support
+6. **Timeout Handling**: 10-second timeout per request with automatic retry
+7. **Data Validation**: Validates API responses before rendering to prevent errors
 
 ## Alternative Backend Implementation
 
@@ -168,12 +213,14 @@ If you prefer a custom backend instead of using a CORS proxy, refer to `BACKEND_
 
 - [ ] Date picker to view historical exchange rates
 - [x] Currency converter calculator ✅ **Implemented**
+- [x] Charts showing rate trends over time ✅ **Implemented**
 - [ ] Favorite currencies feature with persistence
-- [ ] Charts showing rate trends over time
 - [ ] Export to CSV/Excel functionality
 - [ ] Multi-language support
 - [ ] PWA capabilities for offline access
 - [ ] Custom backend option (see BACKEND_GUIDE.md)
+- [ ] Rate change notifications/alerts
+- [ ] Compare multiple currencies on one chart
 
 ## License
 

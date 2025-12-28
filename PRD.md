@@ -13,11 +13,11 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 ## Essential Features
 
 ### Exchange Rate Data Fetching
-- **Functionality**: Retrieves current exchange rates from CNB public API via CORS proxy
-- **Purpose**: Provides real, live data from official Czech banking sources
+- **Functionality**: Retrieves current exchange rates from CNB public API with intelligent multi-proxy fallback system
+- **Purpose**: Provides real, live data from official Czech banking sources with maximum reliability
 - **Trigger**: Automatic on page load, with manual refresh option
-- **Progression**: User loads page → Loading indicator appears → API call via CORS proxy executes → Data parsed and displayed → Success state shown
-- **Success criteria**: Live exchange rates display accurately with currency codes, amounts, and rates clearly visible
+- **Progression**: User loads page → Loading indicator appears → API call via primary proxy → If fails, automatically tries backup proxy → Data parsed and displayed → Success state shown
+- **Success criteria**: Live exchange rates display accurately with currency codes, amounts, and rates clearly visible; system gracefully handles proxy failures
 
 ### Data Table Display
 - **Functionality**: Shows exchange rates in a sortable, scannable table format
@@ -48,25 +48,28 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Success criteria**: Accurate conversions using CNB rates, instant updates on input changes, all currencies available including CZK
 
 ### Currency Trend Chart Visualization
-- **Functionality**: Displays historical exchange rate trends over customizable time periods with interactive charts (line, bar, or area)
-- **Purpose**: Enables users to analyze currency movements and make informed decisions based on historical patterns using different visualization types
-- **Trigger**: User selects currency, time range, and chart type
-- **Progression**: User selects currency → Chooses time range (7-90 days) → Selects chart type (line/bar/area) → Historical data fetched → Chart rendered with trend analysis → User can view tooltips and trend statistics
-- **Success criteria**: Smooth, responsive charts showing accurate historical rates in all three formats, clear trend indicators (up/down), percentage change calculation, and informative tooltips with formatted dates
+- **Functionality**: Displays historical exchange rate trends over customizable time periods with multiple interactive chart types (line, bar, area, daily change) and comprehensive trend analysis
+- **Purpose**: Enables users to analyze currency movements, identify patterns, and make informed decisions based on historical data with rich statistical insights
+- **Trigger**: User selects currency, time range (7-90 days), and chart type
+- **Progression**: User selects currency → Chooses time range → Selects chart type → Batch fetching begins with parallel requests → Progress tracked → Chart rendered with trend analysis → Detailed statistics displayed (overall trend, max increase/decrease, volatility, average change) → User explores interactive tooltips showing day-to-day changes → Can switch chart types or refresh data
+- **Success criteria**: Smooth, responsive charts with accurate historical rates in all four formats; parallel batch processing completes efficiently; clear trend indicators with percentage changes; informative tooltips with formatted dates and change calculations; comprehensive trend statistics; graceful handling of partial data; automatic proxy fallback for reliability
 
 ## Edge Case Handling
 
-- **API Timeout/Network Failure**: Display friendly error message with retry button and troubleshooting hints
+- **API Timeout/Network Failure**: Display friendly error message with retry button, automatic proxy fallback, and troubleshooting hints
+- **CORS Proxy Failure**: Automatically switch to backup proxy service without user intervention
 - **Malformed API Response**: Graceful fallback with error logging and user notification
 - **Empty Data Set**: Show empty state with explanation and refresh action
-- **Slow Connection**: Progressive loading indicator showing fetch is in progress
+- **Slow Connection**: Progressive loading indicator with timeout handling (10s per request)
 - **Stale Data**: Display last update timestamp to inform users of data freshness
 - **Invalid Conversion Input**: Handle non-numeric or negative amounts gracefully without errors
 - **Same Currency Conversion**: Allow but show 1:1 conversion correctly
-- **Historical Data Unavailable**: Show appropriate empty state when chart data cannot be fetched
+- **Historical Data Unavailable**: Show appropriate empty state when chart data cannot be fetched with suggestions
+- **Partial Historical Data**: Display available data with warning when some dates fail to fetch
 - **Weekend/Holiday Gaps**: Chart automatically excludes non-trading days to show accurate trend lines
-- **Long-term Data Loading**: Progressive loading state for chart when fetching multiple days of data
-- **Chart Type Switching**: Smooth transitions between line, bar, and area chart types without data loss
+- **Long-term Data Loading**: Progressive batch loading with clear progress indication for chart data
+- **Chart Type Switching**: Instant transitions between line, bar, area, and change chart types without refetching
+- **Multiple Proxy Failures**: Exhaust all proxy options with retries before showing error to user
 
 ## Design Direction
 
