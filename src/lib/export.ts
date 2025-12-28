@@ -1,7 +1,9 @@
-import { ExchangeRate, ExchangeRateData } from './types'
+import { ExchangeRateData } from './types'
 
+// 1. Export to CSV (Spreadsheet friendly)
 export function exportToCSV(data: ExchangeRateData): void {
   const headers = ['Country', 'Currency', 'Amount', 'Currency Code', 'Rate (CZK)']
+  
   const rows = data.rates.map(rate => [
     rate.country,
     rate.currency,
@@ -10,67 +12,50 @@ export function exportToCSV(data: ExchangeRateData): void {
     rate.rate.toFixed(3)
   ])
 
+  // Add a metadata row at the top, followed by headers and data
   const csvContent = [
     `# CNB Exchange Rates - ${data.date}`,
     headers.join(','),
     ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
   ].join('\n')
 
-  downloadFile(csvContent, `cnb-exchange-rates-${data.date}.csv`, 'text/csv')
+  downloadFile(csvContent, `cnb-rates-${data.date}.csv`, 'text/csv;charset=utf-8;')
 }
 
-export function exportToJSON(data: ExchangeRateData): void {
-  const jsonContent = JSON.stringify({
-    exportDate: new Date().toISOString(),
-    validDate: data.date,
-    source: 'Czech National Bank (CNB)',
-    totalCurrencies: data.rates.length,
-    rates: data.rates.map(rate => ({
-      country: rate.country,
-      currency: rate.currency,
-      amount: rate.amount,
-      currencyCode: rate.currencyCode,
-      rate: rate.rate,
-      ratePerUnit: (rate.rate / rate.amount).toFixed(6)
-    }))
-  }, null, 2)
-
-  downloadFile(jsonContent, `cnb-exchange-rates-${data.date}.json`, 'application/json')
-}
-
-export function exportToPDF(data: ExchangeRateData): void {
-  const pageWidth = 210
-  const pageHeight = 297
-  const margin = 15
-  const contentWidth = pageWidth - (margin * 2)
-  
-  let yPosition = margin + 10
-
+// 2. Export to Text (Human readable text file)
+export function exportToText(data: ExchangeRateData): void {
   const lines: string[] = []
-  
-  lines.push(`CNB Exchange Rates`)
-  lines.push(`Valid Date: ${new Date(data.date).toLocaleDateString('en-US', { 
+
+  lines.push(`CNB EXCHANGE RATES`)
+  lines.push(`==========================================`)
+  lines.push(`Date: ${new Date(data.date).toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   })}`)
   lines.push(`Total Currencies: ${data.rates.length}`)
-  lines.push(`Generated: ${new Date().toLocaleString('en-US')}`)
+  lines.push(`Source: Czech National Bank`)
+  lines.push(`==========================================`)
   lines.push(``)
-  lines.push(`Source: Czech National Bank (CNB)`)
-  lines.push(``)
-  lines.push(`${'='.repeat(80)}`)
-  lines.push(``)
-  
+
   data.rates.forEach((rate, index) => {
     lines.push(`${index + 1}. ${rate.currencyCode} - ${rate.currency}`)
-    lines.push(`   Country: ${rate.country}`)
-    lines.push(`   Rate: ${rate.amount} ${rate.currencyCode} = ${rate.rate.toFixed(3)} CZK`)
+    lines.push(`   Country:  ${rate.country}`)
+    lines.push(`   Rate:     ${rate.amount} ${rate.currencyCode} = ${rate.rate.toFixed(3)} CZK`)
     lines.push(`   Per Unit: 1 ${rate.currencyCode} = ${(rate.rate / rate.amount).toFixed(3)} CZK`)
-    lines.push(``)
+    lines.push(`------------------------------------------`)
   })
 
   const textContent = lines.join('\n')
+  downloadFile(textContent, `cnb-rates-${data.date}.txt`, 'text/plain;charset=utf-8;')
+}
+
+// 3. Export to SVG (Visual document)
+export function exportToSVG(data: ExchangeRateData): void {
+  const pageWidth = 210 // A4 width in mm
+  const pageHeight = Math.max(297, 40 + (data.rates.length * 20)) // Dynamic height
+  const margin = 10
+  const yPosition = margin + 10
 
   const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}mm" height="${pageHeight}mm" viewBox="0 0 ${pageWidth} ${pageHeight}">
@@ -103,18 +88,19 @@ export function exportToPDF(data: ExchangeRateData): void {
     <text x="${margin + 5}" y="${baseY + 3.5}" class="body">Country: ${rate.country}</text>
     <text x="${margin + 5}" y="${baseY + 7}" class="body">Rate: ${rate.amount} ${rate.currencyCode} = ${rate.rate.toFixed(3)} CZK</text>
     <text x="${margin + 5}" y="${baseY + 10.5}" class="body">Per Unit: 1 ${rate.currencyCode} = ${(rate.rate / rate.amount).toFixed(3)} CZK</text>
+    <line x1="${margin}" y1="${baseY + 13}" x2="${pageWidth - margin}" y2="${baseY + 13}" class="divider" stroke-dasharray="2"/>
     `
   }).join('')}
   
-  <line x1="${margin}" y1="${pageHeight - 15}" x2="${pageWidth - margin}" y2="${pageHeight - 15}" class="divider"/>
-  <text x="${pageWidth / 2}" y="${pageHeight - 8}" class="header" text-anchor="middle">
+  <text x="${pageWidth / 2}" y="${pageHeight - 5}" class="header" text-anchor="middle">
     Generated: ${new Date().toLocaleString('en-US')}
   </text>
 </svg>`
 
-  downloadFile(svgContent, `cnb-exchange-rates-${data.date}.svg`, 'image/svg+xml')
+  downloadFile(svgContent, `cnb-rates-${data.date}.svg`, 'image/svg+xml')
 }
 
+// Helper function to trigger downloads
 function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)
