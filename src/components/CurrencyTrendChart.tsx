@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { TrendUp, TrendDown, ArrowsClockwise, Warning } from '@phosphor-icons/react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { TrendUp, TrendDown, ArrowsClockwise, Warning, ChartLine, ChartBar, ChartLineUp } from '@phosphor-icons/react'
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatDate } from '@/lib/utils'
+
+type ChartType = 'line' | 'bar' | 'area'
 
 interface CurrencyTrendChartProps {
   rates: ExchangeRate[]
@@ -18,6 +20,7 @@ interface CurrencyTrendChartProps {
 export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
   const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
   const [timeRange, setTimeRange] = useState<number>(30)
+  const [chartType, setChartType] = useState<ChartType>('line')
 
   const { data: historicalData, isLoading, error, refetch } = useHistoricalRates(selectedCurrency, timeRange)
 
@@ -59,7 +62,7 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
             </CardDescription>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="currency-select" className="text-sm font-medium">
                 Currency
@@ -99,6 +102,37 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="chart-type-select" className="text-sm font-medium">
+                Chart Type
+              </Label>
+              <Select value={chartType} onValueChange={(value) => setChartType(value as ChartType)}>
+                <SelectTrigger id="chart-type-select" className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="line">
+                    <div className="flex items-center gap-2">
+                      <ChartLine size={16} weight="bold" />
+                      <span>Line Chart</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="bar">
+                    <div className="flex items-center gap-2">
+                      <ChartBar size={16} weight="bold" />
+                      <span>Bar Chart</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="area">
+                    <div className="flex items-center gap-2">
+                      <ChartLineUp size={16} weight="bold" />
+                      <span>Area Chart</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-end">
               <Button
                 onClick={() => refetch()}
@@ -111,7 +145,7 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
                   weight="bold"
                   className={isLoading ? 'animate-spin' : ''}
                 />
-                Refresh Chart
+                Refresh
               </Button>
             </div>
           </div>
@@ -174,52 +208,156 @@ export function CurrencyTrendChart({ rates }: CurrencyTrendChartProps) {
         {!isLoading && !error && chartData.length > 0 && (
           <div className="w-full">
             <ResponsiveContainer width="100%" height={400}>
-              <LineChart 
-                data={chartData}
-                margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickLine={{ stroke: 'hsl(var(--border))' }}
-                />
-                <YAxis 
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickLine={{ stroke: 'hsl(var(--border))' }}
-                  domain={['auto', 'auto']}
-                  tickFormatter={(value) => value.toFixed(2)}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                  itemStyle={{ color: 'hsl(var(--primary))' }}
-                  formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
-                  labelFormatter={(label, payload) => {
-                    if (payload && payload[0]) {
-                      return formatDate(payload[0].payload.fullDate)
-                    }
-                    return label
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{ paddingTop: '20px' }}
-                  iconType="line"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="rate" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2.5}
-                  dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-                  activeDot={{ r: 6, fill: 'hsl(var(--accent))' }}
-                  name={`${selectedCurrency} / CZK`}
-                />
-              </LineChart>
+              <>
+                {chartType === 'line' && (
+                  <LineChart 
+                    data={chartData}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      domain={['auto', 'auto']}
+                      tickFormatter={(value) => value.toFixed(2)}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.5rem',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--primary))' }}
+                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          return formatDate(payload[0].payload.fullDate)
+                        }
+                        return label
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="line"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="rate" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2.5}
+                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      activeDot={{ r: 6, fill: 'hsl(var(--accent))' }}
+                      name={`${selectedCurrency} / CZK`}
+                    />
+                  </LineChart>
+                )}
+                
+                {chartType === 'bar' && (
+                  <BarChart 
+                    data={chartData}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      domain={['auto', 'auto']}
+                      tickFormatter={(value) => value.toFixed(2)}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.5rem',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--primary))' }}
+                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          return formatDate(payload[0].payload.fullDate)
+                        }
+                        return label
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="rect"
+                    />
+                    <Bar 
+                      dataKey="rate" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                      name={`${selectedCurrency} / CZK`}
+                    />
+                  </BarChart>
+                )}
+                
+                {chartType === 'area' && (
+                  <AreaChart 
+                    data={chartData}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      domain={['auto', 'auto']}
+                      tickFormatter={(value) => value.toFixed(2)}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.5rem',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--primary))' }}
+                      formatter={(value: number) => [value.toFixed(3) + ' CZK', 'Rate']}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          return formatDate(payload[0].payload.fullDate)
+                        }
+                        return label
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="rect"
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="rate" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2.5}
+                      fill="url(#colorRate)"
+                      name={`${selectedCurrency} / CZK`}
+                    />
+                  </AreaChart>
+                )}
+              </>
             </ResponsiveContainer>
             
             <div className="mt-4 text-center text-sm text-muted-foreground">

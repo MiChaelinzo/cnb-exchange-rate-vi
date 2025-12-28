@@ -48,11 +48,11 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Success criteria**: Accurate conversions using CNB rates, instant updates on input changes, all currencies available including CZK
 
 ### Currency Trend Chart Visualization
-- **Functionality**: Displays historical exchange rate trends over customizable time periods with interactive line chart
-- **Purpose**: Enables users to analyze currency movements and make informed decisions based on historical patterns
-- **Trigger**: User selects currency and time range
-- **Progression**: User selects currency → Chooses time range (7-90 days) → Historical data fetched → Chart rendered with trend analysis → User can view tooltips and trend statistics
-- **Success criteria**: Smooth, responsive chart showing accurate historical rates, clear trend indicators (up/down), percentage change calculation, and informative tooltips with formatted dates
+- **Functionality**: Displays historical exchange rate trends over customizable time periods with interactive charts (line, bar, or area)
+- **Purpose**: Enables users to analyze currency movements and make informed decisions based on historical patterns using different visualization types
+- **Trigger**: User selects currency, time range, and chart type
+- **Progression**: User selects currency → Chooses time range (7-90 days) → Selects chart type (line/bar/area) → Historical data fetched → Chart rendered with trend analysis → User can view tooltips and trend statistics
+- **Success criteria**: Smooth, responsive charts showing accurate historical rates in all three formats, clear trend indicators (up/down), percentage change calculation, and informative tooltips with formatted dates
 
 ## Edge Case Handling
 
@@ -66,6 +66,7 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Historical Data Unavailable**: Show appropriate empty state when chart data cannot be fetched
 - **Weekend/Holiday Gaps**: Chart automatically excludes non-trading days to show accurate trend lines
 - **Long-term Data Loading**: Progressive loading state for chart when fetching multiple days of data
+- **Chart Type Switching**: Smooth transitions between line, bar, and area chart types without data loss
 
 ## Design Direction
 
@@ -114,9 +115,9 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Alert component for error messages
   - Skeleton component for loading states
   - Input component for currency converter amount entry
-  - Select component for currency selection dropdowns
+  - Select component for currency selection dropdowns and chart type selector
   - Label component for form field labels
-  - Recharts LineChart for historical trend visualization
+  - Recharts LineChart, BarChart, and AreaChart for historical trend visualization
   - Tooltip component for chart data point details
   - Legend component for chart data series identification
 - **Customizations**: 
@@ -138,6 +139,9 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - ArrowsLeftRight for currency swap functionality
   - Equals for conversion result indicator
   - TrendUp/TrendDown for chart trend indicators
+  - ChartLine for line chart selector
+  - ChartBar for bar chart selector
+  - ChartLineUp for area chart selector
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -154,4 +158,4 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - Show currency swap button below fields on mobile
   - Ensure dropdowns are touch-friendly with large hit areas
   - Chart remains responsive with adjusted margins for smaller screens
-  - Stack chart controls (currency selector, time range) vertically on mobile
+  - Stack chart controls (currency selector, time range, chart type) into 2x2 grid on mobile
