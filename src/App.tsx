@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useExchangeRates } from '@/hooks/use-exchange-rates'
 import { useComparisonRates } from '@/hooks/use-comparison-rates'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useAutoUpdatePredictionHistory } from '@/hooks/use-auto-update-prediction-history'
 import { ExchangeRateTable } from '@/components/ExchangeRateTable'
 import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleton'
 import { CurrencyConverter } from '@/components/CurrencyConverter'
@@ -16,16 +17,17 @@ import { AiInsights } from '@/components/AiInsights'
 import { AiChatAssistant } from '@/components/AiChatAssistant'
 import { AiReportGenerator } from '@/components/AiReportGenerator'
 import { AiCurrencyPredictions } from '@/components/AiCurrencyPredictions'
+import { PredictionHistoryViewer } from '@/components/PredictionHistoryViewer'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle } from '@phosphor-icons/react'
+import { ArrowsClockwise, Bank, Warning, ChartLine, CalendarCheck, Star, ChartPieSlice, Bell, Sparkle, ClockCounterClockwise } from '@phosphor-icons/react'
 import { formatDate } from '@/lib/utils'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 
-type ViewMode = 'current' | 'comparison' | 'analytics' | 'ai'
+type ViewMode = 'current' | 'comparison' | 'analytics' | 'ai' | 'history'
 
 function App() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
@@ -35,6 +37,8 @@ function App() {
   const comparison = useComparisonRates()
   const { favorites, clearFavorites } = useFavorites()
 
+  useAutoUpdatePredictionHistory(data?.rates)
+
   const handleRefresh = async () => {
     if (viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') {
       toast.promise(refetch(), {
@@ -42,7 +46,7 @@ function App() {
         success: 'Exchange rates updated successfully',
         error: 'Failed to fetch exchange rates',
       })
-    } else {
+    } else if (viewMode === 'comparison') {
       toast.promise(comparison.refetchAll(), {
         loading: 'Refreshing comparison data...',
         success: 'Comparison data updated successfully',
@@ -84,24 +88,26 @@ function App() {
               {(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && !isLoading && !error && data && (
                 <ExportMenu data={data} variant="outline" size="lg" />
               )}
-              <Button
-                onClick={handleRefresh}
-                disabled={(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
-                size="lg"
-                className="gap-2"
-              >
-                <ArrowsClockwise 
-                  size={18} 
-                  weight="bold"
-                  className={((viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
-                />
-                Refresh
-              </Button>
+              {viewMode !== 'history' && (
+                <Button
+                  onClick={handleRefresh}
+                  disabled={(viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading || (viewMode === 'comparison' && comparison.isLoading)}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <ArrowsClockwise 
+                    size={18} 
+                    weight="bold"
+                    className={((viewMode === 'current' || viewMode === 'analytics' || viewMode === 'ai') && isLoading) || (viewMode === 'comparison' && comparison.isLoading) ? 'animate-spin' : ''}
+                  />
+                  Refresh
+                </Button>
+              )}
             </div>
           </div>
 
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
-            <TabsList className="grid w-full max-w-3xl grid-cols-4 h-12">
+            <TabsList className="grid w-full max-w-4xl grid-cols-5 h-12">
               <TabsTrigger value="current" className="gap-2 text-base">
                 <ChartLine size={20} weight="duotone" />
                 Current Rates
@@ -117,6 +123,10 @@ function App() {
               <TabsTrigger value="ai" className="gap-2 text-base">
                 <Sparkle size={20} weight="duotone" />
                 AI Insights
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-2 text-base">
+                <ClockCounterClockwise size={20} weight="duotone" />
+                History
               </TabsTrigger>
             </TabsList>
 
@@ -304,6 +314,17 @@ function App() {
                     </Button>
                   </AlertDescription>
                 </Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="history" className="space-y-8 mt-8">
+              {data && (
+                <PredictionHistoryViewer 
+                  currencies={data.rates.map(r => r.currencyCode).filter((v, i, a) => a.indexOf(v) === i)}
+                />
+              )}
+              {!data && isLoading && (
+                <ExchangeRateTableSkeleton />
               )}
             </TabsContent>
           </Tabs>

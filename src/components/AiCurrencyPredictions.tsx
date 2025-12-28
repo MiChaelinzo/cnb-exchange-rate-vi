@@ -5,11 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Brain, TrendUp, TrendDown, ArrowsClockwise, DownloadSimple, FileCsv, FilePdf } from '@phosphor-icons/react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { Brain, TrendUp, TrendDown, ArrowsClockwise, DownloadSimple, FileCsv, FilePdf, FloppyDisk } from '@phosphor-icons/react'
 import { ExchangeRate } from '@/lib/types'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { exportPredictionsToCSV, exportPredictionsToPDF } from '@/lib/export'
+import { usePredictionHistory } from '@/hooks/use-prediction-history'
 import { toast } from 'sonner'
 
 interface AiCurrencyPredictionsProps {
@@ -38,6 +39,7 @@ export function AiCurrencyPredictions({ rates }: AiCurrencyPredictionsProps) {
   const [prediction, setPrediction] = useState<PredictionResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { savePrediction } = usePredictionHistory()
 
   const popularCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD']
   const sortedRates = [...rates].sort((a, b) => {
@@ -234,6 +236,27 @@ Example format:
     }
   }
 
+  const handleSaveToHistory = () => {
+    if (!prediction) return
+
+    const selectedRate = rates.find(r => r.currencyCode === prediction.currency)
+    const currencyName = selectedRate?.currency || prediction.currency
+
+    savePrediction({
+      currency: prediction.currency,
+      currencyName,
+      currentRate: prediction.currentRate,
+      predictions: prediction.predictions,
+      overallTrend: prediction.overallTrend,
+      analysis: prediction.analysis,
+      weekChange: prediction.weekChange,
+    })
+
+    toast.success('Prediction saved to history', {
+      description: 'View it in the Prediction History tab to track accuracy over time',
+    })
+  }
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -250,24 +273,35 @@ Example format:
             </div>
           </div>
           {prediction && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <DownloadSimple size={16} weight="bold" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleExport('csv')} className="gap-2 cursor-pointer">
-                  <FileCsv size={18} weight="duotone" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-2 cursor-pointer">
-                  <FilePdf size={18} weight="duotone" />
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveToHistory}
+                className="gap-2"
+              >
+                <FloppyDisk size={16} weight="bold" />
+                Save to History
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <DownloadSimple size={16} weight="bold" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleExport('csv')} className="gap-2 cursor-pointer">
+                    <FileCsv size={18} weight="duotone" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-2 cursor-pointer">
+                    <FilePdf size={18} weight="duotone" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </CardHeader>

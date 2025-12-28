@@ -131,6 +131,13 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **Progression**: User navigates to AI Insights tab → Clicks Generate Report → AI analyzes all rates, identifies strongest/weakest currencies → Generates structured report with executive summary, key findings, currency analysis, outlook, and recommendations → Report displays in scrollable viewer → User can download as Markdown (.md) or Text (.txt) → Files named with date for organization
 - **Success criteria**: Professional report structure with clear sections; uses GPT-4o model for high-quality writing; includes specific data points and numbers; identifies top 3 strongest and weakest currencies; provides actionable recommendations; download works correctly in both formats; report formatted for readability; generation completes within 10-15 seconds; filenames include date
 
+### Prediction History Tracking
+- **Functionality**: Tracks and stores AI-generated currency predictions over time, automatically updating with actual rates to compare forecast accuracy, displaying historical predictions with accuracy metrics
+- **Purpose**: Enables users to evaluate the reliability of AI forecasts by comparing predictions against actual rates, building trust through transparency and helping users make better-informed decisions based on proven accuracy
+- **Trigger**: User saves prediction from AI Predictions tab or views History tab
+- **Progression**: User generates prediction → Clicks "Save to History" button → Prediction stored with timestamp → User navigates to History tab → Views list of past predictions → Filters by currency if desired → Clicks prediction to see detailed comparison → Views predicted vs actual rates in chart → Sees accuracy percentage and variance metrics → Actual rates auto-populate daily as time passes
+- **Success criteria**: Predictions persist across sessions using KV storage; automatic daily updates of actual rates for saved predictions; accuracy calculated as percentage comparing predicted vs actual; visual chart showing predicted vs actual overlay; color-coded accuracy badges (green >90%, yellow >70%, red <70%); detailed daily breakdown showing variance; filter by currency; delete individual or clear all predictions; dialog view for detailed analysis; graceful handling of incomplete data (pending predictions); responsive mobile layout
+
 ## Edge Case Handling
 
 - **API Timeout/Network Failure**: Display friendly error message with retry button, automatic proxy fallback, and troubleshooting hints
@@ -191,6 +198,14 @@ A professional Czech National Bank (CNB) Exchange Rate Viewer application that d
 - **AI Tab Data Loading**: Ensure all AI features have access to current rate data
 - **AI Features Without Data**: Disable or hide AI features when rate data is unavailable
 - **Four-Tab Navigation**: Ensure smooth transitions between all four tabs including new AI Insights tab
+- **Prediction History Empty State**: Show helpful prompt when no predictions have been saved yet
+- **Prediction History Filter**: Handle empty results when filtering by specific currency
+- **Prediction History Auto-Update**: Gracefully update actual rates daily without breaking existing predictions
+- **Prediction History Incomplete Data**: Display pending status for predictions with no actual data yet
+- **Prediction History Accuracy Calculation**: Handle edge cases where only partial actual data is available
+- **Prediction History Delete Confirmation**: Confirm before deleting individual predictions
+- **Prediction History Clear All**: Require confirmation before clearing entire history
+- **Five-Tab Navigation**: Ensure smooth transitions between all five tabs including new History tab
 
 ## Design Direction
 
@@ -297,13 +312,13 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - PaperPlaneRight for sending chat messages
   - User for user chat messages
   - ArrowsClockwise for stable/neutral trend in predictions
-  - Bell for rate alerts feature
-  - CheckCircle for triggered alerts
-  - Sparkle for AI features and insights
-  - ChatCircleDots for AI chat assistant
-  - FileText for AI report generator
-  - PaperPlaneRight for sending chat messages
-  - User for user chat messages
+  - FloppyDisk for save to history action
+  - ClockCounterClockwise for prediction history tab and feature
+  - CheckCircle for high accuracy predictions
+  - XCircle for low accuracy predictions
+  - MinusCircle for predictions with no actual data
+  - Target for prediction target metrics
+  - Calendar for prediction creation dates
 - **Spacing**: 
   - Container padding: p-6 (24px)
   - Card spacing: gap-6 between major sections
@@ -342,8 +357,8 @@ Subtle fade-ins for data appearing (200ms), smooth loading spinner rotation, and
   - AI chat messages stack properly with max-width constraints
   - AI report viewer scrollable on mobile with touch-friendly controls
   - AI features maintain usability on small screens with proper spacing
-  - Alert creation form fields stack vertically on small screens
-  - AI Insights tab includes 4th tab in responsive navigation
-  - AI chat messages stack properly with max-width constraints
-  - AI report viewer scrollable on mobile with touch-friendly controls
-  - AI features maintain usability on small screens with proper spacing
+  - Prediction history list cards stack properly on mobile
+  - Prediction history dialog scrollable on mobile with touch-friendly controls
+  - Prediction history filter dropdown full-width on small screens
+  - History tab includes 5th tab in responsive navigation with proper text sizing
+  - Prediction comparison charts maintain readability on mobile devices
