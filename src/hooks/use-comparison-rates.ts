@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react'
 import { fetchExchangeRates, CNBApiError } from '@/lib/api'
 import { ExchangeRateData } from '@/lib/types'
 
+// Define the data structure for a comparison point
 export interface ComparisonDataPoint {
   date: string
   data: ExchangeRateData
 }
 
+// Define the return type of the hook
 interface UseComparisonRatesResult {
   comparisons: ComparisonDataPoint[]
   isLoading: boolean
@@ -14,7 +16,6 @@ interface UseComparisonRatesResult {
   addDate: (date: string) => Promise<void>
   removeDate: (date: string) => void
   clear: () => void
-  refetchAll: () => Promise<void>
 }
 
 export function useComparisonRates(): UseComparisonRatesResult {
@@ -23,6 +24,7 @@ export function useComparisonRates(): UseComparisonRatesResult {
   const [error, setError] = useState<string | null>(null)
 
   const addDate = useCallback(async (date: string) => {
+    // 1. Prevent duplicates
     if (comparisons.some(c => c.date === date)) {
       setError('This date is already in the comparison')
       return
@@ -32,15 +34,22 @@ export function useComparisonRates(): UseComparisonRatesResult {
     setError(null)
     
     try {
+      // 2. Fetch the data
       const result = await fetchExchangeRates(date)
-      setComparisons(prev => [...prev, { date, data: result }].sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      ))
+      
+      // 3. Add to state and sort chronologically
+      setComparisons(prev => {
+        const updated = [...prev, { date, data: result }]
+        return updated.sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        )
+      })
     } catch (err) {
+      // 4. Handle errors gracefully
       if (err instanceof CNBApiError) {
         setError(err.message)
       } else {
-        setError('Failed to fetch data for this date')
+        setError('An unexpected error occurred while fetching rates')
       }
     } finally {
       setIsLoading(false)
@@ -55,32 +64,8 @@ export function useComparisonRates(): UseComparisonRatesResult {
   const clear = useCallback(() => {
     setComparisons([])
     setError(null)
+    setIsLoading(false)
   }, [])
-
-  const refetchAll = useCallback(async () => {
-    if (comparisons.length === 0) return
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const results = await Promise.all(
-        comparisons.map(async (comp) => {
-          const data = await fetchExchangeRates(comp.date)
-          return { date: comp.date, data }
-        })
-      )
-      setComparisons(results)
-    } catch (err) {
-      if (err instanceof CNBApiError) {
-        setError(err.message)
-      } else {
-        setError('Failed to refresh comparison data')
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [comparisons])
 
   return {
     comparisons,
@@ -89,6 +74,6 @@ export function useComparisonRates(): UseComparisonRatesResult {
     addDate,
     removeDate,
     clear,
-    refetchAll,
   }
 }
+
