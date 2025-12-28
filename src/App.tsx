@@ -5,7 +5,7 @@ import { ExchangeRateTableSkeleton } from '@/components/ExchangeRateTableSkeleto
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowsClockwise, Bank, Warning } from '@phosphor-icons/react'
+import { ArrowsClockwise, Bank, Warning, Info } from '@phosphor-icons/react'
 import { formatDate } from '@/lib/utils'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
@@ -16,7 +16,7 @@ function App() {
 
   const handleRefresh = async () => {
     toast.promise(refetch(), {
-      loading: 'Fetching latest exchange rates...',
+      loading: 'Fetching exchange rates...',
       success: 'Exchange rates updated successfully',
       error: 'Failed to fetch exchange rates',
     })
@@ -27,6 +27,16 @@ function App() {
       <Toaster position="top-right" />
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Alert className="mb-6 border-accent/30 bg-accent/5">
+          <Info size={20} weight="fill" className="text-accent" />
+          <AlertTitle className="text-accent-foreground">Frontend Demo Mode</AlertTitle>
+          <AlertDescription className="text-sm text-muted-foreground mt-1">
+            This demo uses AI-generated mock data. The CNB API requires a backend proxy due to CORS restrictions.
+            <br />
+            <strong className="text-foreground">Next step:</strong> Implement the .NET backend as described in the README to fetch real CNB data.
+          </AlertDescription>
+        </Alert>
+
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary rounded-xl">

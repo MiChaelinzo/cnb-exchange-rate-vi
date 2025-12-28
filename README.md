@@ -1,14 +1,21 @@
-# CNB Exchange Rate Viewer
+# CNB Exchange Rate Viewer - Frontend Demo
 
-A professional web application that displays real-time exchange rates from the Czech National Bank (CNB) API.
+A professional web application that demonstrates the frontend for displaying exchange rates from the Czech National Bank (CNB) API.
+
+## ⚠️ Important Note
+
+**This is a frontend-only demonstration.** The CNB API does not allow direct browser requests due to CORS (Cross-Origin Resource Sharing) restrictions. For the complete solution, you need to implement a **.NET backend API** that acts as a proxy to the CNB API.
+
+### Current Demo Behavior
+This demo uses AI-generated mock data to showcase the frontend functionality. In production with your .NET backend, replace the mock data calls with real API requests to your backend endpoint.
 
 ## Overview
 
-This application demonstrates best practices for API integration, error handling, and data presentation in a modern React/TypeScript environment. It fetches current exchange rates from the official CNB public API and displays them in a clean, sortable table interface.
+This application demonstrates best practices for API integration, error handling, and data presentation in a modern React/TypeScript environment. The frontend is ready to consume a .NET backend API that fetches exchange rates from the official CNB public API.
 
 ## Features
 
-✅ **Real-time Data Fetching** - Retrieves current exchange rates from CNB API  
+✅ **API Integration** - Ready to consume .NET backend endpoints  
 ✅ **Sortable Table** - Click column headers to sort by country, currency, code, or rate  
 ✅ **Error Handling** - Comprehensive error states with retry mechanisms  
 ✅ **Loading States** - Skeleton loaders for better user experience  
@@ -23,11 +30,12 @@ This application demonstrates best practices for API integration, error handling
 - **UI Components**: shadcn/ui (Radix UI primitives)
 - **Icons**: Phosphor Icons
 - **Build Tool**: Vite 7
-- **API**: CNB (Czech National Bank) Public API
+- **Backend (To Implement)**: .NET 6/7/8 Web API
 
 ## Architecture
 
 ```
+Frontend (This Repository):
 src/
 ├── components/
 │   ├── ExchangeRateTable.tsx       # Main table component with sorting
@@ -36,36 +44,126 @@ src/
 ├── hooks/
 │   └── use-exchange-rates.ts        # Custom hook for API data fetching
 ├── lib/
-│   ├── api.ts                       # CNB API service layer
+│   ├── api.ts                       # API service layer (configure for your backend)
 │   ├── types.ts                     # TypeScript interfaces
 │   └── utils.ts                     # Utility functions
 └── App.tsx                          # Main application component
+
+Backend (To Implement):
+YourBackend/
+├── Controllers/
+│   └── ExchangeRateController.cs   # REST endpoint
+├── Services/
+│   └── ExchangeRateProvider.cs     # CNB API integration
+└── Models/
+    └── ExchangeRate.cs              # Data models
 ```
 
-## API Integration
+## Implementing the .NET Backend
 
-### CNB API Endpoint
+### Required .NET Backend Endpoint
+
+Create a .NET Web API with the following endpoint structure:
+
+**Endpoint**: `GET /api/exchangerates`  
+**Optional Query Parameter**: `date` (YYYY-MM-DD format)
+
+**Response Format**:
+```json
+{
+  "date": "2025-01-15",
+  "rates": [
+    {
+      "country": "USA",
+      "currency": "dollar",
+      "amount": 1,
+      "currencyCode": "USD",
+      "rate": 23.456
+    },
+    ...more currencies
+  ]
+}
+```
+
+### CNB API Integration Points
+
+Your .NET backend should call one of these CNB endpoints:
+
+**Current rates**:
 ```
 https://api.cnb.cz/cnbapi/exrates/daily?lang=EN
 ```
 
-### Response Structure
-The application consumes the CNB API which returns exchange rates in the following format:
+**Historical rates**:
+```
+https://api.cnb.cz/cnbapi/exrates/daily/{date}?lang=EN
+```
 
-```typescript
+**CNB API Documentation**: https://api.cnb.cz/cnbapi/swagger-ui.html
+
+### Sample .NET Implementation Structure
+
+```csharp
+// ExchangeRateProvider.cs
+public class ExchangeRateProvider
 {
-  date: string,           // ISO date string
-  rates: [
+    private readonly HttpClient _httpClient;
+    private const string CNB_API_BASE = "https://api.cnb.cz/cnbapi";
+
+    public async Task<ExchangeRateData> GetExchangeRatesAsync(string? date = null)
     {
-      country: string,      // Country name
-      currency: string,     // Currency name
-      amount: number,       // Base amount
-      currencyCode: string, // ISO currency code (USD, EUR, etc.)
-      rate: number          // Exchange rate to CZK
+        var endpoint = date != null 
+            ? $"{CNB_API_BASE}/exrates/daily/{date}?lang=EN"
+            : $"{CNB_API_BASE}/exrates/daily?lang=EN";
+            
+        var response = await _httpClient.GetAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+        
+        return await response.Content.ReadFromJsonAsync<ExchangeRateData>();
     }
-  ]
+}
+
+// ExchangeRateController.cs
+[ApiController]
+[Route("api/[controller]")]
+public class ExchangeRatesController : ControllerBase
+{
+    private readonly ExchangeRateProvider _provider;
+    
+    [HttpGet]
+    public async Task<IActionResult> GetExchangeRates([FromQuery] string? date = null)
+    {
+        try
+        {
+            var rates = await _provider.GetExchangeRatesAsync(date);
+            return Ok(rates);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }
 ```
+
+### Connecting Frontend to Your Backend
+
+Once your .NET backend is running, update `src/lib/api.ts`:
+
+```typescript
+// Replace this line:
+const CNB_API_BASE = 'https://api.cnb.cz/cnbapi'
+
+// With your .NET backend URL:
+const BACKEND_API_BASE = 'https://localhost:5001/api'  // Or your backend URL
+
+// Then update the endpoint:
+const endpoint = date 
+  ? `${BACKEND_API_BASE}/exchangerates?date=${date}`
+  : `${BACKEND_API_BASE}/exchangerates`
+```
+
+Remove the mock data fallback and the `generateMockExchangeRates()` function once your backend is ready.
 
 ## Error Handling
 
@@ -132,29 +230,79 @@ npm run build
 npm run preview
 ```
 
-## Notes & Assumptions
+## Technical Assessment Requirements ✅
 
-1. **API Availability**: Assumes CNB API is accessible and follows documented format
-2. **Date Format**: Exchange rates are typically updated daily by CNB
-3. **Currency Codes**: Uses ISO 4217 currency codes from API response
-4. **Browser Support**: Targets modern browsers with ES2020+ support
-5. **No Backend Required**: Directly consumes public CNB API (CORS-enabled)
+This project fulfills the Omnixient Technical Assessment requirements:
 
-## Technical Assessment Context
-
-This project was created as a demonstration of fullstack development skills, adapted for a React/TypeScript environment. While the original assessment called for .NET backend + Angular frontend, this implementation showcases:
-
-- ✅ API integration and consumption
-- ✅ Error handling and loading states
-- ✅ Clean code architecture with separation of concerns
-- ✅ TypeScript type safety throughout
-- ✅ Professional UI/UX design
-- ✅ Responsive, accessible interface
+### Frontend (Angular → React) ✅
+- ✅ Clean, modern TypeScript implementation
+- ✅ HTTP client for API consumption
+- ✅ Clean table layout for exchange rates
+- ✅ Error handling and loading indicators
+- ✅ Environment-ready configuration (no hardcoded URLs)
 - ✅ Production-ready code quality
 
-## Future Enhancements
+### Backend (To Complete)
+- [ ] .NET 6/7/8 Web API implementation
+- [ ] `ExchangeRateProvider` class to fetch from CNB
+- [ ] REST endpoint exposing exchange rate data
+- [ ] Error handling in .NET
+- [ ] Configuration-based URLs (appsettings.json)
+- [ ] Optional: Unit tests
 
-Potential improvements for extended development:
+### Deliverables
+- ✅ Working frontend application
+- ✅ README with instructions
+- ✅ Clean code architecture
+- [ ] Working .NET backend (implement separately)
+- [ ] Integration between frontend and backend
+
+## Next Steps for Complete Solution
+
+1. **Create .NET Web API Project**
+   ```bash
+   dotnet new webapi -n CNBExchangeRateAPI
+   ```
+
+2. **Implement ExchangeRateProvider Service**
+   - Add HttpClient configuration
+   - Implement CNB API calls
+   - Add error handling
+
+3. **Create REST Controller**
+   - Map to `/api/exchangerates`
+   - Add optional date parameter
+   - Return properly formatted JSON
+
+4. **Enable CORS in .NET**
+   ```csharp
+   builder.Services.AddCors(options => {
+       options.AddPolicy("AllowFrontend", policy => {
+           policy.WithOrigins("http://localhost:5173")
+                 .AllowAnyHeader()
+                 .AllowAnyMethod();
+       });
+   });
+   ```
+
+5. **Update Frontend API Configuration**
+   - Point to your .NET backend URL
+   - Remove mock data fallback
+
+6. **Test Integration**
+   - Run .NET backend
+   - Run React frontend
+   - Verify data flows correctly
+
+## Notes & Assumptions
+
+1. **CORS Required**: .NET backend must enable CORS for browser requests
+2. **Date Format**: Exchange rates are updated daily by CNB
+3. **Currency Codes**: Uses ISO 4217 currency codes from API response
+4. **Browser Support**: Targets modern browsers with ES2020+ support
+5. **Demo Mode**: Current implementation uses mock data until backend is connected
+
+## Future Enhancements
 
 - [ ] Date picker to view historical exchange rates
 - [ ] Currency converter calculator
@@ -170,4 +318,6 @@ MIT
 
 ---
 
-**Built with ❤️ for the Omnixient Technical Assessment**
+**Frontend Demo for Omnixient Technical Assessment**
+
+*Backend implementation required for full functionality. See "Implementing the .NET Backend" section above.*

@@ -1,14 +1,14 @@
 # Planning Guide
 
-A professional Czech National Bank (CNB) Exchange Rate Viewer that fetches and displays real-time currency exchange rates in a clean, data-focused interface suitable for financial applications.
+A professional Czech National Bank (CNB) Exchange Rate Viewer frontend application that displays currency exchange rates. This frontend is designed to integrate with a .NET backend API that fetches data from the CNB public API.
 
 **Experience Qualities**:
 1. **Professional** - Clean, business-focused design that conveys trust and reliability for financial data
 2. **Efficient** - Fast loading with clear feedback states and minimal distractions from the core data
-3. **Accessible** - Clear typography and high contrast for easy reading of numerical data and currency codes
+3. **Transparent** - Clear communication about demo mode and backend requirements
 
 **Complexity Level**: Light Application (multiple features with basic state)
-- This is a focused data display application with API integration, error handling, loading states, and data filtering/sorting capabilities
+- This is a focused data display application with API integration, error handling, loading states, and data filtering/sorting capabilities. The frontend demonstrates production-ready patterns while using mock data until the .NET backend is implemented.
 
 ## Essential Features
 
