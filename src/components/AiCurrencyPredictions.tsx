@@ -5,9 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Brain, TrendUp, TrendDown, ArrowsClockwise } from '@phosphor-icons/react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Brain, TrendUp, TrendDown, ArrowsClockwise, DownloadSimple, FileCsv, FilePdf } from '@phosphor-icons/react'
 import { ExchangeRate } from '@/lib/types'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { exportPredictionsToCSV, exportPredictionsToPDF } from '@/lib/export'
+import { toast } from 'sonner'
 
 interface AiCurrencyPredictionsProps {
   rates: ExchangeRate[]
@@ -211,6 +214,26 @@ Example format:
     }
   }
 
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!prediction) return
+
+    const selectedRate = rates.find(r => r.currencyCode === prediction.currency)
+    const currencyName = selectedRate?.currency || prediction.currency
+
+    try {
+      if (format === 'csv') {
+        exportPredictionsToCSV(prediction, currencyName)
+        toast.success('CSV file downloaded successfully')
+      } else if (format === 'pdf') {
+        exportPredictionsToPDF(prediction, currencyName)
+        toast.success('PDF file downloaded successfully')
+      }
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(`Failed to export ${format.toUpperCase()} file`)
+    }
+  }
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -226,6 +249,26 @@ Example format:
               </CardDescription>
             </div>
           </div>
+          {prediction && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <DownloadSimple size={16} weight="bold" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => handleExport('csv')} className="gap-2 cursor-pointer">
+                  <FileCsv size={18} weight="duotone" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-2 cursor-pointer">
+                  <FilePdf size={18} weight="duotone" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
