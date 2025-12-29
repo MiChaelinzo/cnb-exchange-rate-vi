@@ -1,7 +1,6 @@
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { ComparisonDataPoint } from '@/hooks/use-comparison-rates'
-import { ExchangeRate } from './types'
 
 interface ComparisonReportOptions {
   title?: string
@@ -120,16 +119,6 @@ export class ComparisonReportGenerator {
     this.currentY += 15
     this.doc.setTextColor(...this.textColor)
     this.doc.setFont('helvetica', 'normal')
-  }
-
-  private addText(text: string, size: number = 10, bold: boolean = false) {
-    this.checkPageBreak()
-    this.doc.setFontSize(size)
-    this.doc.setFont('helvetica', bold ? 'bold' : 'normal')
-    
-    const lines = this.doc.splitTextToSize(text, this.pageWidth - 2 * this.margin)
-    this.doc.text(lines, this.margin, this.currentY)
-    this.currentY += lines.length * (size / 2) + 3
   }
 
   private addMetricCard(
@@ -277,15 +266,17 @@ export class ComparisonReportGenerator {
       curr.volatility > max.volatility ? curr : max
     , currencyAnalysis[0])
 
-    this.addMetricCard(
-      'Most Volatile',
-      mostVolatile.currencyCode,
-      `${mostVolatile.volatility.toFixed(2)}% range`,
-      this.margin + 2 * (cardWidth + 3),
-      startY,
-      cardWidth,
-      this.warningColor
-    )
+    if (mostVolatile) {
+      this.addMetricCard(
+        'Most Volatile',
+        mostVolatile.currencyCode,
+        `${mostVolatile.volatility.toFixed(2)}% range`,
+        this.margin + 2 * (cardWidth + 3),
+        startY,
+        cardWidth,
+        this.warningColor
+      )
+    }
 
     this.currentY = startY + 30
 
@@ -297,25 +288,29 @@ export class ComparisonReportGenerator {
       curr.totalChangePercent < min.totalChangePercent ? curr : min
     , currencyAnalysis[0])
 
-    this.addMetricCard(
-      'Strongest Gainer',
-      strongestGainer.currencyCode,
-      `+${strongestGainer.totalChangePercent.toFixed(2)}%`,
-      this.margin,
-      this.currentY,
-      cardWidth,
-      this.accentColor
-    )
+    if (strongestGainer) {
+      this.addMetricCard(
+        'Strongest Gainer',
+        strongestGainer.currencyCode,
+        `+${strongestGainer.totalChangePercent.toFixed(2)}%`,
+        this.margin,
+        this.currentY,
+        cardWidth,
+        this.accentColor
+      )
+    }
 
-    this.addMetricCard(
-      'Biggest Loser',
-      biggestLoser.currencyCode,
-      `${biggestLoser.totalChangePercent.toFixed(2)}%`,
-      this.margin + cardWidth + 3,
-      this.currentY,
-      cardWidth,
-      this.warningColor
-    )
+    if (biggestLoser) {
+      this.addMetricCard(
+        'Biggest Loser',
+        biggestLoser.currencyCode,
+        `${biggestLoser.totalChangePercent.toFixed(2)}%`,
+        this.margin + cardWidth + 3,
+        this.currentY,
+        cardWidth,
+        this.warningColor
+      )
+    }
 
     const avgVolatility = currencyAnalysis.reduce((sum, curr) => sum + curr.volatility, 0) / currencyAnalysis.length
 
@@ -651,9 +646,12 @@ export class ComparisonReportGenerator {
     const allRates = currencyAnalysis
       .filter(c => topCurrencies.includes(c.currencyCode))
       .flatMap(c => c.ratesOverTime.filter(r => r.rate !== null).map(r => r.rate!))
+    
+    if (allRates.length === 0) return
+
     const minRate = Math.min(...allRates)
     const maxRate = Math.max(...allRates)
-    const rateRange = maxRate - minRate
+    const rateRange = maxRate - minRate || 1 // Avoid division by zero
 
     for (let i = 0; i <= 4; i++) {
       const y = chartY + (plotHeight * i) / 4
@@ -666,7 +664,7 @@ export class ComparisonReportGenerator {
     }
 
     for (let i = 0; i < comparisons.length; i++) {
-      const x = chartX + 25 + (plotWidth * i) / (comparisons.length - 1)
+      const x = chartX + 25 + (plotWidth * i) / (comparisons.length - 1 || 1)
       const date = new Date(comparisons[i].date)
       this.doc.setFontSize(6)
       this.doc.text(
@@ -698,9 +696,9 @@ export class ComparisonReportGenerator {
         const rate2 = currency.ratesOverTime[i + 1].rate
 
         if (rate1 !== null && rate2 !== null) {
-          const x1 = chartX + 25 + (plotWidth * i) / (currency.ratesOverTime.length - 1)
+          const x1 = chartX + 25 + (plotWidth * i) / (currency.ratesOverTime.length - 1 || 1)
           const y1 = chartY + plotHeight - ((rate1 - minRate) / rateRange) * plotHeight
-          const x2 = chartX + 25 + (plotWidth * (i + 1)) / (currency.ratesOverTime.length - 1)
+          const x2 = chartX + 25 + (plotWidth * (i + 1)) / (currency.ratesOverTime.length - 1 || 1)
           const y2 = chartY + plotHeight - ((rate2 - minRate) / rateRange) * plotHeight
 
           this.doc.line(x1, y1, x2, y2)
